@@ -1,3 +1,6 @@
+2003-01-04 Vaclav Haisman <V.Haisman@sh.cvut.cz>
+	* ast.cxx, ast.hxx: Snad kompletni podpora vyrazu.
+	
 2003-01-01 Vaclav Haisman <V.Haisman@sh.cvut.cz>
 	* lexan.lex, csynan.y: Nove soubory.
 	

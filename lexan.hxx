@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <cctype>
+#include <csynan.hxx>
 
 struct LexanVal { 
     std::string str;
@@ -33,7 +34,8 @@ typedef short Token;
 #define TOK_EOF  0
 #define TOK_ERROR  -1
 /* oddelovace a operatory */
-//#define TOK_NOT  256
+/*
+#define TOK_NOT  256
 #define TOK_QUOTMARK  257
 #define TOK_MOD  258
 #define TOK_BAND  259
@@ -80,9 +82,9 @@ typedef short Token;
 #define TOK_LOR  300
 #define TOK_ELLIPSIS  301
 #define TOK_LSHIFTEQ  302
-#define TOK_RSHIFTEQ  303
+#define TOK_RSHIFTEQ  303*/
 /* klicova slova */
-#define TOK_INT  304
+/*#define TOK_INT  304
 #define TOK_CHAR  305
 #define TOK_LONG  306
 #define TOK_UNSIGNED  307
@@ -96,17 +98,16 @@ typedef short Token;
 #define TOK_TYPEDEF  315
 #define TOK_ENUM  316
 #define TOK_UNION  317
-#define TOK_DO  318
-
+#define TOK_DO  318*/
 /* ostatni tokeny */
-#define TOK_IDENT  319
+/*#define TOK_IDENT  319
 #define TOK_FPNUM  320
 #define TOK_INTNUM  321
 #define TOK_UINTNUM  322
 #define TOK_CHARVAL  323
-#define TOK_STRING  324
+#define TOK_STRING  324*/
 /* tokeny doplnene pozdeji */
-#define TOK_VOLATILE 325
+/*#define TOK_VOLATILE 325
 #define TOK_SIZEOF 326
 #define TOK_EXTERN 327
 #define TOK_STATIC 328
@@ -117,7 +118,7 @@ typedef short Token;
 #define TOK_DEFAULT 333
 #define TOK_CONTINUE 334
 #define TOK_BREAK 335
-#define TOK_RETURN 336
+#define TOK_RETURN 336*/
 
 extern std::istream * lexan_input;
 extern LEXANVAL lexan_val;

@@ -1,21 +1,21 @@
 %{
-#include <iostream>
-#include "lexan.hxx"
-
 #define YYPARSE_PARAM ptr 
 #define YYERROR_VERBOSE 1
 #define YYDEBUG 1
 
 char* filename = "";
-extern int yylineno;
 extern int yylex (void);
 void yyerror (char *s);
 
 union yystype {
     int x;
+    char * str;
 };
-
 #define YYSTYPE yystype
+
+#include <iostream>
+#include "lexan.hxx"
+
 %}
 
 %token TOK_INT TOK_CHAR TOK_LONG TOK_UNSIGNED TOK_FLOAT TOK_DOUBLE TOK_SIGNED TOK_SHORT
@@ -27,6 +27,7 @@ union yystype {
 %token TOK_DIVEQ TOK_LSHIFT TOK_RSHIFT TOK_ARROW TOK_LISHIFTEQ TOK_XOREQ
 %token TOK_LE TOK_PLUSPLUS TOK_OREQ TOK_ANDEQ TOK_ELLIPSIS TOK_FOR TOK_NE
 %token TOK_LSHIFTEQ TOK_VOLATILE TOK_MODEQ TOK_RSHIFTEQ TOK_DO TOK_SIZEOF
+%token TYPE_NAME
 
 %start translation_unit
 %%
@@ -219,7 +220,7 @@ type_specifier
         | TOK_UNSIGNED
         | struct_or_union_specifier
         | enum_specifier
-/*        | TYPE_NAME*/
+        | TYPE_NAME
         ;
 
 struct_or_union_specifier
@@ -282,7 +283,7 @@ type_qualifier
         ;
 
 declarator
-        : pointer direct_declarator
+        : pointer direct_declarator /*bez ukazatelu*/
         | direct_declarator
         ;
 

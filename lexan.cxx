@@ -153,7 +153,7 @@ Token lexan (void)
       stav_2: {
 	  /* prefix: """ */
 	  /* konecny stav */
-	  token = TOK_QUOTMARK;
+	  token = '"';
 	  poslednikstav = 2;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -285,7 +285,7 @@ Token lexan (void)
       stav_5: {
 	  /* prefix: "'" */
 	  /* konecny stav */
-	  token = TOK_APOSTROPHE;
+	  token = '\'';
 	  poslednikstav = 5;
 	  ch = GETCHAR();
 	  switch (ch) {
