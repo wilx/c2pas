@@ -5,18 +5,24 @@
 
 class ASTBase {
 public:
-    virtual bool isexpr () const = 0; 
+    enum Type {Expr, Statement, Ident, TypeSpec};
+protected:
+    Type astt;
+public: 
+    ASTBase (Type);
     virtual ASTBase * clone () const = 0;
+    Type type () const;
 };
 
 /*
   Vyrazy
 */
 class CExpr : public ASTBase {
+protected:
+    CExpr ();
 public: 
     virtual CExpr * simplify ();
     virtual bool isconst () const = 0;
-    virtual bool isexpr () const;
 };
 
 //
@@ -148,15 +154,27 @@ public:
   Statements
 */
 
-class CStatement : public ASTBase {
+//
+class ASTList {
+protected:
+    ASTBase * nxt;
+public:
+    ASTList (ASTBase *);
+    ASTList (const ASTList &);
+    ASTBase * next () const;
+    ASTBase * setNext (ASTBase *);
+};
+
+//
+class CStatement : public ASTBase, public ASTList {
 public:
     enum Type {Labeled, Compound, Expr, Selection, Iteration, Jump};
 protected:
     Type stmtt;
 public:
-    CStatement (Type);
+    CStatement (Type, CStatement *);
     Type stmt_type () const;
-    bool isexpr () const;
+    virtual ASTBase * clone () const;
 };
 
 //
@@ -165,43 +183,40 @@ protected:
     CExpr * expr;
 public:
     CExprStatement (CExpr *);
+    virtual ~CExprStatement ();
     CExpr * getExpr () const;
     virtual ASTBase * clone () const;
 };
 
 //
-class ASTList : public ASTBase {
-private:
-    ASTBase * nxt;
-public:
-    ASTList (ASTBase *);
-    ASTBase * next () const;
-    ASTBase * setNext (ASTBase *);
-    virtual bool isexpr () const;
-    virtual ASTBase * clone () const;
-};
-
-//
-class CIdent {
+class CIdent : public ASTBase {
 protected:
     std::string nm;
 public:
     CIdent (const std::string &);
     CIdent (const char *);
+    virtual ~CIdent ();
     std::string name () const;
 };
 
 //
-class CTypeSpec : public ASTList {
+class CTypeSpec : public ASTBase, public ASTList {
 public:
     enum Type {Void, Char, Short, Int, Long, Float, Double, Signed, Unsigned,
                Struct, Union, Enum, TypeName};
 protected:
-    Type ttp;
+    Type tstp;
 public:
     CTypeSpec (CTypeSpec::Type, CTypeSpec *); 
     Type typespec_type () const;
+    virtual ASTBase * clone () const;
 };
+
+/*class CDecl : public ASTList {
+protected:
+    CTypeSpec ts;
+    CIdent id;
+};*/
 
 //
 /*class CCompoundStatement : public CStatement {

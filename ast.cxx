@@ -1,10 +1,22 @@
 #include "ast.hxx"
 #include <cstdio>
 
-/* CExpr */
-bool CExpr::isexpr () const
+/* ASTBase */
+
+ASTBase::ASTBase (ASTBase::Type t)
+    : astt(t)
 {
-    return true;
+}
+
+ASTBase::Type ASTBase::type () const
+{
+    return astt;
+}
+
+/* CExpr */
+CExpr::CExpr ()
+    : ASTBase(ASTBase::Expr)
+{
 }
 
 /* CConstExpr */
@@ -115,25 +127,18 @@ CUnOp::Type CUnOp::unop_type () const
     return unopt;
 }
 
-/* CStatement */
-CStatement::CStatement (CStatement::Type t)
-    : stmtt(t)
-{
-}
-
-bool CStatement::isexpr () const
-{
-    return false;
-}
-
-CStatement::Type CStatement::stmt_type () const
-{
-    return stmtt;
-}
+/*
+  Statements
+*/
 
 /* ASTList */
 ASTList::ASTList (ASTBase * n)
     : nxt(n)
+{
+}
+
+ASTList::ASTList (const ASTList & l)
+    : nxt(l.next() ? l.next()->clone() : NULL)
 {
 }
 
@@ -149,24 +154,39 @@ ASTBase * ASTList::setNext (ASTBase * n)
     return old;
 }
 
-bool ASTList::isexpr () const
-{
-    return false;
-}
-
-ASTBase * ASTList::clone () const
+/*ASTBase * ASTList::clone () const
 {
     return new ASTList(nxt ? nxt->clone() : NULL);
+}*/
+
+/* CStatement */
+CStatement::CStatement (CStatement::Type t, CStatement * n = NULL)
+    : ASTBase(ASTBase::Statement), ASTList(n), stmtt(t)
+{
+}
+
+CStatement::Type CStatement::stmt_type () const
+{
+    return stmtt;
+}
+
+ASTBase * CStatement::clone () const
+{
+    return new CStatement(stmtt, (CStatement *)(nxt ? nxt->clone() : NULL));
 }
 
 /* CIdent */
 CIdent::CIdent (const std::string & n)
-    : nm(n)
+    : ASTBase(ASTBase::Ident), nm(n)
 {
 }
 
 CIdent::CIdent (const char * cstr)
-    : nm(cstr)
+    : ASTBase(ASTBase::Ident), nm(cstr)
+{
+}
+
+CIdent::~CIdent ()
 {
 }
 
@@ -177,19 +197,29 @@ std::string CIdent::name () const
 
 /* CTypeSpec */
 CTypeSpec::CTypeSpec (CTypeSpec::Type t, CTypeSpec * n = NULL)
-    : ASTList(n), ttp(t)
+    : ASTBase(ASTBase::TypeSpec), ASTList(n), tstp(t)
 {
 }
 
 CTypeSpec::Type CTypeSpec::typespec_type () const
 {
-    return ttp;
+    return tstp;
+}
+
+ASTBase * CTypeSpec::clone () const
+{
+    return new CTypeSpec(tstp);
 }
 
 /* CExprStatement */
 CExprStatement::CExprStatement (CExpr * e)
     : CStatement(CStatement::Expr), expr(e)
 {
+}
+
+CExprStatement::~CExprStatement ()
+{
+    delete expr;
 }
 
 CExpr * CExprStatement::getExpr () const
