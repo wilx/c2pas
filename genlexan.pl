@@ -64,10 +64,11 @@ while (! $finish) {
     print "#ifndef LEXAN_HXX\n";
     print "#define LEXAN_HXX\n\n";
 
-    print "#include <cstdio>\n\n";
+    print "#include <iostream>\n\n";
 
-    print "#define GETCHAR() getchar()\n\n";
-
+    print "#define GETCHAR() lexan_input.get()\n";
+    print "#define UNGETCH() lexan_input.unget()\n\n";
+    
     print "const short POCETSTAVU = ".($state+1).";\n\n";
 
     print "enum Token {\n";
@@ -80,9 +81,12 @@ while (! $finish) {
     }
     print "};\n\n";
 
+    print "extern std::istream & lexan_input;\n\n";
+
     print "extern int lexan (void);\n\n";
 
     print "#endif // LEXAN_HXX\n";
+
     close $fh;
 }
 
@@ -94,6 +98,35 @@ while (! $finish) {
 
     print "#include <lexan.hxx>\n\n";
 
+    print "std::istream & lexan_input;\n\n";
+
+    # tabulka jmen tokenu v koncovych stavech
+    print "static const char * const kstavyjmena[POCETSTAVU] =\n{\n";
+    for my $i (0..$state) {
+	print "/* $i */ ";
+ 	if (defined($table[$i]{'token'})) {
+ 	    print '"'.$table[$i]{'token'}.'"';
+ 	}
+ 	else {
+ 	    print "NULL";
+ 	}
+ 	print ",\n";
+    }
+    print "};\n\n";
+
+    # tabulka koncovych stavu
+    print "static const char kstavy[POCETSTAVU] =\n{\n";
+    for my $i (0..$state) {
+	if (defined($table[$i]{'token'})) {
+	    print "1, ";
+	}
+	else {
+	    print "0, ";
+	}
+	print "\n" if ($i+1) % 20 == 0;
+    }
+    print "\n};\n\n";
+
     print "int lexan (void)\n";
     print "{\n";
     print "short poslednikstav = -1;\n";
@@ -101,15 +134,26 @@ while (! $finish) {
     print "int ch;\n\n";
     # pro kazdy stav udelej navesti
     for my $i (0..$state) {
+	my $last = 1;
+	my $endstate;
 	my $statename = genname($table[$i]{'prefix'}, $i);
 	print "stav_".$statename.": {\n";
 	print "    /* prefix: \"".($table[$i]{'prefix'})."\" */\n";
 	# konecny stav
-	if (defined($table[$i]{'token'})) {
+	if (($endstate = defined($table[$i]{'token'}))) {
 	    print "    /* konecny stav */\n";
 	    print "    token = ".($table[$i]{'token'}).";\n";
 	    print "    poslednikstav = ".$i.";\n";
 	}
+	
+	# je to posledni stav a za nim zadny dalsi?
+	#for my $char (0..255) {
+	#    if (defined($table[$i]{'row'}[$char])) {
+	#	$last = 0;
+	#	last;
+	#    }
+	#}
+
 	# ostatni stavy
 	print "    ch = GETCHAR();\n";
 	print "    switch (ch) {\n";
@@ -123,40 +167,23 @@ while (! $finish) {
 		print "    }\n";
 	    }
 	}
-	print "    default: goto lexan_konec;\n";
+	print "    default: {\n";
+	if ($endstate) {
+	    print "      UNGETCH();\n";
+	    print "      goto lexan_konec;\n";
+	}
+	else {
+	    print "      goto lexan_error;\n";
+	}
+	print "    }\n";
 	print "    }\n";
 	print "}\n\n";
     }
+    print "lexan_error:\n";
+    print "    return TOK_ERROR;\n\n";
     print "lexan_konec:\n";
-    print "    ungetc(ch, stdin);\n";
     print "    return token;\n";
     print "}\n\n";
-
-    # tabulka jmen tokenu v koncovych stavech
-    # print "static const char * const kstavyjmena[POCETSTAVU] =\n{\n";
-#     for my $i (0..$state) {
-# 	if (defined($table[$i]{'token'})) {
-# 	    print '"'.$table[$i]{'token'}.'"';
-# 	}
-# 	else {
-# 	    print "NULL";
-# 	}
-# 	print ",\n";
-#     }
-#     print "};\n\n";
-
-    # tabulka koncovych stavu
-    print "static const char kstavy[POCETSTAVU] =\n{\n";
-    for my $i (0..$state) {
-	if (defined($table[$i]{'token'})) {
-	    print "1, ";
-	}
-	else {
-	    print "0, ";
-	}
-	print "\n" if ($i+1) % 20 == 0;
-    }
-    print "};\n";
 
     close $fh;
 }
