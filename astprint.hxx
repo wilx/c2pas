@@ -1,4 +1,4 @@
-#idndef _ASTPRINT_HXX_
+#ifndef _ASTPRINT_HXX_
 #define _ASTPRINT_HXX_
 
 #include <iostream>
@@ -20,13 +20,10 @@ struct ASTInfo {
     ASTInfo(ASTInfo *, int);
 };
 
-std::map<std::string, ASTInfo *> pidents;
-std::list<CDecl *> decls;
-std::ostream * outs;
+extern std::map<std::string, ASTInfo *> pidents;
+extern std::list<CDecl *> decls;
+extern int blocks;
+extern std::ostream * outs;
 
-std::pair<std::string, ASTInfo *> findname(const std::string &, ASTInfo &);
-std::string insertname(const std::string &, ASTInfo &);
-
-void astprint (CCompoundStatement *, ASTInfo &);
 
 #endif // _ASTPRINT_HXX_
