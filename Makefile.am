@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS=foreign dist-bzip2
 AM_CXXFLAGS = @CXXFLAGS@ -W -Wall -fverbose-asm -save-temps
 bin_PROGRAMS = c2pas
 c2pas_SOURCES = c2pas.cxx lexan.cxx lexan.hxx csynan.cxx csynan.hxx ast.hxx ast.cxx
