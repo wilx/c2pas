@@ -1,4 +1,11 @@
-2001-12-08 Vaclav Haisman <V.Haisman@sh.cvut.cz>
+2002-12-09 Vaclav Haisman <V.Haisman@sh.cvut.cz>
+	* lexan.cxx: Upraveno poradi includes. Smazany nepotrebne promenne. 
+	Presunuti lexikalni anlyzy klicovych slov, identifikatoru a cisel do 
+	tela lexan(). Pridana lexikalni analyza znakovych a retezcovych 
+	konstant. Pridano preskakovani komentaru a bilych znaku..
+	* lexan.hxx: Ulozeni ciselnych hodnot do unionu. Preformatovani.
+	
+2002-12-08 Vaclav Haisman <V.Haisman@sh.cvut.cz>
 	* lexan.cxx: Novy soubor.
 	* lexan.hxx: Novy soubor.
 	* genlexan.pl: Pozmeneni.

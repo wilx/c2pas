@@ -1,89 +1,32 @@
-#include <lexan.hxx>
 #include <map>
 #include <utility>
 #include <ios>
 #include <cmath>
+#include "lexan.hxx"
 
 std::istream * lexan_input;
 LEXANVAL lexan_val;
 
 static std::map<std::string, Token> kslova;
 
-static const char * const kstavyjmena[POCETSTAVU] =
-{
-    /* 0 */ NULL,
-    /* 1 */ "TOK_NOT",
-    /* 2 */ "TOK_QUOTMARK",
-    /* 3 */ "TOK_MOD",
-    /* 4 */ "TOK_BAND",
-    /* 5 */ "TOK_APOSTROPHE",
-    /* 6 */ "TOK_LRBRACKET",
-    /* 7 */ "TOK_RRBRACKET",
-    /* 8 */ "TOK_MULT",
-    /* 9 */ "TOK_PLUS",
-    /* 10 */ "TOK_COMMA",
-    /* 11 */ "TOK_MINUS",
-    /* 12 */ "TOK_DOT",
-    /* 13 */ "TOL_DIV",
-    /* 14 */ "TOK_COLON",
-    /* 15 */ "TOK_SEMICOLON",
-    /* 16 */ "TOK_LT",
-    /* 17 */ "TOK_EQSIGN",
-    /* 18 */ "TOK_GT",
-    /* 19 */ "TOK_QUESMARK",
-    /* 20 */ "TOK_LSBRACKET",
-    /* 21 */ "TOK_RSBRACKET",
-    /* 22 */ "TOK_XOR",
-    /* 23 */ "TOK_LBRACE",
-    /* 24 */ "TOK_BOR",
-    /* 25 */ "TOK_RBRACE",
-    /* 26 */ "TOK_TILDE",
-    /* 27 */ "TOK_NE",
-    /* 28 */ "TOK_MODEQ",
-    /* 29 */ "TOK_LAND",
-    /* 30 */ "TOK_ANDEQ",
-    /* 31 */ "TOK_MULTEQ",
-    /* 32 */ "TOK_PLUSPLUS",
-    /* 33 */ "TOK_PLUSEQ",
-    /* 34 */ "TOK_MINMIN",
-    /* 35 */ "TOK_MINUSEQ",
-    /* 36 */ "TOK_ARROW",
-    /* 37 */ NULL,
-    /* 38 */ "TOK_DIVEQ",
-    /* 39 */ "TOK_LSHIFT",
-    /* 40 */ "TOK_LE",
-    /* 41 */ "TOK_EQ",
-    /* 42 */ "TOK_GE",
-    /* 43 */ "TOK_RSHIFT",
-    /* 44 */ "TOK_XOREQ",
-    /* 45 */ "TOK_OREQ",
-    /* 46 */ "TOK_LOR",
-    /* 47 */ "TOK_ELIPSE",
-    /* 48 */ "TOK_LSHIFTEQ",
-    /* 49 */ "TOK_RSHIFTEQ",
-};
-
-static const char kstavy[POCETSTAVU] =
-{
-    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
-};
-
-static Token lexan_cislo (char, bool);
-static Token lexan_mozna_cislo (char);
-static Token lexan_kslovo_nebo_ident (char);
-
 Token lexan (void)
 {
     short poslednikstav = -1;
     Token token = TOK_ERROR;
-    int ch;
+    int ch, komur = 0;
+    bool fp = false;
+    std::ostringstream str;
 
     try {
-	{
+	/* preskoc mezery */
+	do {
+	    if (lexan_input->eof())
+		return TOK_EOF;
+	    ch = GETCHAR(); 
+	} while (isspace(ch));
+      lexan_start: {
 	  /* prefix: "" */
-	  ch = GETCHAR();
+	  //ch = GETCHAR();
 	  switch (ch) {
 	  case '!': {
 	      goto stav_1;
@@ -163,12 +106,29 @@ Token lexan (void)
 	  case '~': {
 	      goto stav_26;
 	  }
+	  /* vsechno ostatni */
 	  default: {
-	      if (isalpha(ch))
-		  return lexan_kslovo_nebo_ident(ch);
+	      /* klicova slova nebo identifikatory */
+	      if (isalpha(ch)) {
+		  do {
+		      str << ch;
+		      ch = GETCHAR();
+		  } while (isalnum(ch) || ch == '_');
+		  UNGETCH();
+		  
+		  lexan_val.str = str.str();
+		  std::map<std::string, Token>::const_iterator i;
+		  if ((i = kslova.find(lexan_val.str)) != kslova.end())
+		      return i->second;
+		  else
+		      return TOK_IDENT;
+	      }
+	      /* cisla */
 	      if (isdigit(ch))
-		  return lexan_mozna_cislo(ch);
-	      goto lexan_error;
+		  goto lexan_cislo;
+	      /* vrat znak jako token */
+	      token = (Token)ch;
+	      goto lexan_konec;
 	  }
 	  }
       }
@@ -190,6 +150,7 @@ Token lexan (void)
 	  }
       }
 
+      lexan_retezec:
       stav_2: {
 	  /* prefix: """ */
 	  /* konecny stav */
@@ -197,11 +158,88 @@ Token lexan (void)
 	  poslednikstav = 2;
 	  ch = GETCHAR();
 	  switch (ch) {
-	  default: {
-	      UNGETCH();
+	  case '\\':
+	      goto lexan_retezec_esc;
+	  case '"': {
+	      lexan_val.str = str.str();
+	      token = TOK_STRING;
 	      goto lexan_konec;
 	  }
+	  default: {
+	      str << ch;
+	      goto lexan_retezec;
 	  }
+	  }
+      }
+
+      lexan_retezec_esc: {
+	  ch = GETCHAR();
+	  switch (ch) {
+	  case 'x':
+	  case 'X':
+	      goto lexan_retezec_esc_hex;
+	  case 'n': str << '\n';
+	  case 'r': str << '\r';
+	  case 't': str << '\t';
+	  case 'a': str << '\a';
+	  default: {
+	      if (ch >= '0' && ch <= '7') {
+		  UNGETCH();
+		  goto lexan_retezec_esc_oct;
+	      }
+	      str << ch;
+	  }
+	  }
+      }
+
+      lexan_retezec_esc_oct: {
+	  int val = 0, oldval = 0;
+	  int i = 1;
+	  ch = GETCHAR();
+	  while (i <= 3) {
+	      if (ch >= '0' && ch <= '7') {
+		  oldval = val;
+		  val = val * 8 + ch - '0';
+		  if (val > 255) {
+		      val = oldval;
+		      break;
+		  }
+	      }
+	      else 
+		  break;
+	      ch = GETCHAR();
+	      ++i;
+	  }
+	  UNGETCH();
+	  str << (char)val;
+	  goto lexan_retezec;
+      }
+
+      lexan_retezec_esc_hex: {
+	  int val = 0, oldval = 0;
+	  int i = 1;
+	  ch = toupper(GETCHAR());
+	  while (i <= 3) {
+	      if (isdigit(ch) || (ch >= 'A' && ch <= 'F')) {
+		  oldval = val;
+		  val = val * 16;
+		  if (isdigit(ch)) 
+		      val += ch - '0';
+		  else 
+		      val += ch - 'A' + 10;
+		  if (val > 255) {
+		      val = oldval;
+		      break;
+		  }
+	      }
+	      else 
+		  break;
+	      ch = toupper(GETCHAR());
+	      ++i;
+	  }
+	  UNGETCH();
+	  str << (char)val;
+	  goto lexan_retezec;
       }
 
       stav_3: {
@@ -248,11 +286,35 @@ Token lexan (void)
 	  poslednikstav = 5;
 	  ch = GETCHAR();
 	  switch (ch) {
+	  case '\\':
+	      goto lexan_znak_esc;
 	  default: {
-	      UNGETCH();
-	      goto lexan_konec;
+	      lexan_val.chval = ch;
+	      goto lexan_znak_konec;
 	  }
 	  }
+      }
+	
+      lexan_znak_esc: {
+	  ch = GETCHAR();
+	  switch (ch) {
+	  case 'n': lexan_val.chval = '\n'; break;
+	  case 'r': lexan_val.chval = '\r'; break;
+	  case 't': lexan_val.chval = '\t'; break;
+	  case 'a': lexan_val.chval = '\a'; break;
+	  default:
+	      lexan_val.chval = ch;
+	      goto lexan_znak_konec;
+	  }
+	  
+      }
+	
+      lexan_znak_konec: {
+	  ch = GETCHAR();
+	  if (ch != '\'')
+	      goto lexan_error;
+	  token = TOK_CHARVAL;
+	  goto lexan_konec;
       }
 
       stav_6: {
@@ -368,6 +430,11 @@ Token lexan (void)
 	      goto stav_37;
 	  }
 	  default: {
+	      /* cislo? */
+	      if (isdigit(ch)) {
+		  fp = true;
+		  goto lexan_cislo;
+	      }
 	      UNGETCH();
 	      goto lexan_konec;
 	  }
@@ -383,12 +450,48 @@ Token lexan (void)
 	  switch (ch) {
 	  case '=': {
 	      goto stav_38;
+	  case '*': {
+	      ++komur;
+	      goto lexan_komentar;
+	  }
 	  }
 	  default: {
 	      UNGETCH();
 	      goto lexan_konec;
 	  }
 	  }
+      }
+
+      lexan_komentar: {
+	  ch = GETCHAR();
+	  switch (ch) {
+	  case '*':
+	      goto lexan_komentar_hv;
+	  case '/':
+	      goto lexan_komentar_2;
+	  default:
+	      goto lexan_komentar;
+	  }
+      }
+      
+      lexan_komentar_2: {
+	  ch = GETCHAR();
+	  if (ch == '*')
+	      ++komur;
+	  goto lexan_komentar;
+      }
+
+      lexan_komentar_hv: {
+	  ch = GETCHAR();
+	  if (ch == '/') {
+	      --komur;
+	      if (komur == 0)
+		  goto lexan_start;
+	      else 
+		  goto lexan_komentar;
+	  }
+	  else
+	      goto lexan_komentar;
       }
 
       stav_14: {
@@ -923,13 +1026,91 @@ Token lexan (void)
 	  }
 	  }
       }
+
+      /* lexikalni analyza cisla */
+      lexan_cislo: {
+	  long double x = 0;
+	  int exp = 0, eexp = 0, esign = +1;
+    
+	  if (fp) 
+	      goto fraction_part;
+	    
+	  if (isdigit(ch)) {
+	      /* cislice pred desetinou teckou */
+	      do {
+		  x = x*10 + ch - '0';
+		  ch = GETCHAR(); 
+	      } while (isdigit(ch));
+	      if (ch == 'e' || ch == 'E')
+		  goto exponent_part;
+	  }
+
+	fraction_part:
+	  if (ch == '.') {
+	      fp = true;
+	      ch = GETCHAR();
+	      while (isdigit(ch)) {
+		  --exp;
+		  x = x*10 + ch - '0';
+		  ch = GETCHAR();
+	      }
+	      if (ch == 'e' || ch == 'E')
+		  goto exponent_part;
+	      goto konec;
+	  }
+    
+	  /* cele cislo */
+	  if (! fp) {
+	      UNGETCH();
+	      if (x > 0) {
+		  lexan_val.uintval = (unsigned long long int)x;
+		  return TOK_UINTNUM;
+	      }
+	      else {
+		  lexan_val.intval = (long long int)x;
+		  return TOK_INTNUM;
+	      }
+	  }
+    
+	exponent_part:
+	  /* exponent */
+	  ch = GETCHAR();
+	  if (ch == '-') {
+	      esign = -1;
+	      ch = GETCHAR();
+	      goto exponent_digits;
+	  }
+	  if (ch == '+') {
+	      ch = GETCHAR();
+	      goto exponent_digits;
+	  }
+	  if (isdigit(ch))
+	      goto exponent_digits;
+	  else 
+	      ERROR();
+
+	exponent_digits:
+	  if (! isdigit(ch))
+	      ERROR();
+	  while (isdigit(ch)) {
+	      eexp = eexp*10 + ch - '0';
+	      ch = GETCHAR();
+	  }
+
+	konec:
+	  UNGETCH();
+	  lexan_val.fpval = x * pow(10, exp + esign*eexp);
+	  return TOK_FPNUM;
+      }
     }
     catch (std::istream::failure& e) {
-	std::cerr << "Chycena vyjimka v " << __PRETTY_FUNCTION__ << ": "
-		  << __FILE__ << ":" << __LINE__ << ":"
-		  << e.what() << std::endl;
-	if (! lexan_input->eof()) 
-	    std::cerr << "Neni to EOF. Vazna chyba!!" << std::endl;
+	if (lexan_input->eof()) {
+	    std::cerr << "EOF!!" << std::endl;
+	    return TOK_EOF;
+	}
+	else 
+	    std::cerr << "Neni to EOF. Vazna chyba vstupniho proudu!!" 
+		      << std::endl;
     }
   lexan_error:
     return TOK_ERROR;
@@ -957,114 +1138,4 @@ void lexan_init(std::istream & input)
     kslova.insert(std::make_pair(std::string("typedef"), TOK_TYPEDEF));
     kslova.insert(std::make_pair(std::string("enum"), TOK_ENUM));
     kslova.insert(std::make_pair(std::string("union"), TOK_UNION));
-}
-
-static Token lexan_kslovo_nebo_ident (char ch)
-{
-    std::string str;
-    
-    do {
-	str.push_back(ch);
-	ch = GETCHAR();
-    } while (isalnum(ch) || ch == '_');
-    UNGETCH();
-    
-    std::map<std::string, Token>::const_iterator i;
-    if ((i = kslova.find(str)) != kslova.end())
-	return i->second;
-    else {
-	lexan_val.str = str;
-	return TOK_IDENT;
-    }
-    
-}
-
-/* Lexikalni analyza cisla.
-   Parametr ch je bud cislice nebo '.' */
-static Token lexan_mozna_cislo (char ch)
-{
-    if (isdigit(ch))
-	return lexan_cislo(ch, false);
-    else {
-	ch = GETCHAR();
-	if (isdigit(ch))
-	    return lexan_cislo(ch, true);
-	return TOK_DOT;
-    }
-}
-
-static Token lexan_cislo (char ch, bool fp)
-{
-    long double x = 0;
-    int exp = 0, eexp = 0, esign = +1;
-    
-    if (fp) 
-	goto fraction_part;
-	    
-    if (isdigit(ch)) {
-	/* cislice pred desetinou teckou */
-	do {
-	    x = x*10 + ch - '0';
-	    ch = GETCHAR(); 
-	} while (isdigit(ch));
-	if (ch == 'e' || ch == 'E')
-	    goto exponent_part;
-    }
-
-  fraction_part:
-    if (ch == '.') {
-	fp = true;
-	ch = GETCHAR();
-	while (isdigit(ch)) {
-	    --exp;
-	    x = x*10 + ch - '0';
-	    ch = GETCHAR();
-	}
-	if (ch == 'e' || ch == 'E')
-	    goto exponent_part;
-	goto konec;
-    }
-    
-    /* cele cislo */
-    if (! fp) {
-	UNGETCH();
-	if (x > 0) {
-	    lexan_val.uintval = (unsigned long long int)x;
-	    return TOK_UINTNUM;
-	}
-	else {
-	    lexan_val.intval = (long long int)x;
-	    return TOK_INTNUM;
-	}
-    }
-    
-  exponent_part:
-    /* exponent */
-    ch = GETCHAR();
-    if (ch == '-') {
-	esign = -1;
-	ch = GETCHAR();
-	goto exponent_digits;
-    }
-    if (ch == '+') {
-	ch = GETCHAR();
-	goto exponent_digits;
-    }
-    if (isdigit(ch))
-	goto exponent_digits;
-    else 
-	ERROR();
-
-  exponent_digits:
-    if (! isdigit(ch))
-	ERROR();
-    while (isdigit(ch)) {
-	eexp = eexp*10 + ch - '0';
-	ch = GETCHAR();
-    }
-
-  konec:
-    UNGETCH();
-    lexan_val.fpval = x * pow(10, exp + esign*eexp);
-    return TOK_FPNUM;
 }
