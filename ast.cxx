@@ -6,22 +6,17 @@ CConstExpr::CConstExpr (CConstExpr::Type t, AllTypes v)
 {
 }
 
-CExpr * CConstExpr::simplify () const
-{
-    return clone();
-}
-
-const CConstExpr::Type CConstExpr::type () const
+CConstExpr::Type CConstExpr::const_type () const
 {
     return tp;
 }
 
-const bool CConstExpr::isconst () const
+bool CConstExpr::isconst () const
 {
     return true;
 }
 
-const AllTypes CConstExpr::value () const
+AllTypes CConstExpr::value () const
 {
     return val;
 }
@@ -45,24 +40,24 @@ CUIntExpr::CUIntExpr (unsigned long long int v)
 }
 
 /* COp */
-COp::COp (char o)
-    : op(o)
+COp::COp (Type tp)
+    : t(tp)
 {
 }
 
-const bool COp::isconst () const
+bool COp::isconst () const
 {
     return false;
 }
 
-const char COp::type () const
+COp::Type COp::type () const
 {
-    return op;
+    return t;
 }
 
 /* CBinOp */
-CBinOp::CBinOp (char o, CExpr * l, CExpr * r)
-    : COp(o), left(l), right(r)
+CBinOp::CBinOp (Type tp, CExpr * l, CExpr * r)
+    : COp(BinaryOp), left(l), right(r), binopt(tp)
 {
 }
 
@@ -82,41 +77,34 @@ CExpr * CBinOp::rightArg () const
     return right;
 }
 
+CBinOp::Type CBinOp::binop_type () const 
+{
+    return binopt;
+}
+
 CExpr * CBinOp::clone () const
 {
-    return new CBinOp(op, left->clone(), right->clone());
-}
-
-CExpr * CBinOp::simplify () const
-{
-    return clone();
-}
-
-/* CArithBinOp */
-CExpr * CArithBinOp::simplify () const
-{
-    /*if (left->isconst() && right->isconst()) {
-	switch (op) {
-	case '+': return new C
-	}
-    }
-    else*/ 
-    return clone();
-	
+    return new CBinOp(binopt, (CExpr *)left->clone(), (CExpr *)right->clone());
 }
 
 /* CUnOp */
-CExpr * CUnOp::clone () const
-{
-    return new CUnOp(op, arg->clone());
-}
-
 CUnOp::~CUnOp ()
 {
     delete arg;
 }
 
-CExpr * CUnOp::simplify () const
+CUnOp::CUnOp (CUnOp::Type t, CExpr * x)
+    : COp(UnaryOp), arg(x), unopt(t)
 {
-    return clone();
 }
+
+CExpr * CUnOp::clone () const
+{
+    return new CUnOp(unopt, (CExpr *)arg->clone());
+}
+
+CUnOp::Type CUnOp::unop_type () const
+{
+    return unopt;
+}
+

@@ -1,12 +1,16 @@
 #ifndef _AST_HXX_
 #define _AST_HXX_
 
-//
-class CExpr {
+class ASTBase {
 public:
-    virtual CExpr * simplify () const = 0;
-    virtual CExpr * clone () const = 0;
-    virtual const bool isconst () const = 0;
+    virtual ASTBase * clone () const = 0;
+};
+
+//
+class CExpr : public ASTBase {
+public:
+    virtual CExpr * simplify ();
+    virtual bool isconst () const = 0;
 };
 
 //
@@ -55,7 +59,7 @@ union AllTypes {
 //
 class CConstExpr : public CExpr {
 public:
-    enum Type {CharExpr, FloatExpr, IntExpr, UIntExpr, BoolExpr};
+    enum Type {CharExpr, FloatExpr, IntExpr, UIntExpr, BoolExpr, StringExpr};
 private:
     Type tp;
 protected:
@@ -63,10 +67,9 @@ protected:
 public:    
     CConstExpr (Type, AllTypes);
 
-    virtual CExpr * simplify () const;
-    virtual const bool isconst () const;
-    const Type type () const;
-    const AllTypes value () const;
+    virtual bool isconst () const;
+    Type const_type () const;
+    AllTypes value () const;
 };
 
 //
@@ -89,49 +92,52 @@ public:
     CUIntExpr (unsigned long long int);
 };
 
-// 
+//
 class COp : public CExpr {
-protected:
-    char op;
 public:
-    COp (char);
-
-    virtual const bool isconst () const;
-    const char type () const;
+    enum Type {UnaryOp, BinaryOp, TernaryOp};
+protected:
+    Type t;
+public:
+    COp (Type);
+    
+    virtual bool isconst () const;
+    Type type () const;
 };
 
 //
 class CBinOp : public COp {
+public:
+    enum Type {PlusBOp, MinusBOp, MultBOp, DivBOp, ModBOp, LShiftBOp, RShiftBOp,
+               BAndBOp, BOrBOp, LAndBOp, LOrBOp, EqBOp, NEqBOp, LEqBOp, GEqBOp,
+               LeBOp, GtBOp, XorBOp};
 protected:
     CExpr * left, * right;
+    Type binopt;
 public:
-    CBinOp (char, CExpr *, CExpr *);
+    CBinOp (Type, CExpr *, CExpr *);
     virtual ~CBinOp ();
     
     CExpr * leftArg () const;
     CExpr * rightArg () const;
+    Type binop_type () const;
     virtual CExpr * clone () const;
-    virtual CExpr * simplify () const;
-};
-
-//
-class CArithBinOp : public CBinOp {
-public:
-    CArithBinOp (char, CExpr *, CExpr *);
-    
-    virtual CExpr * simplify () const;
 };
 
 //
 class CUnOp : public COp {
+public:
+    enum Type {StarUOp, TildeUOp, ExclUOp, AndUOp, PlusUOp, MinusUOp, PreIncUOp,
+               PreDecUOp, PostIncUOp, PostDecUOp, NotUOp};
 protected:
     CExpr * arg;
+    Type unopt;
 public:
-    CUnOp (char, CExpr *);
+    CUnOp (Type, CExpr *);
     virtual ~CUnOp ();
 
+    Type unop_type () const;
     virtual CExpr * clone () const;
-    virtual CExpr * simplify () const;
 };
 
 #endif // _AST_HXX_
