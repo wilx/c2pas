@@ -1158,3 +1158,8 @@ void lexan_init(std::istream & input)
     kslova.insert(std::make_pair(std::string("break"), TOK_BREAK));
     kslova.insert(std::make_pair(std::string("return"), TOK_RETURN));
 }
+
+int yylex (void)
+{
+    return lexan();
+}
