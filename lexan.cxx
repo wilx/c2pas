@@ -5,7 +5,7 @@
 #include "lexan.hxx"
 
 std::istream * lexan_input;
-LEXANVAL lexan_val;
+//LEXANVAL lexan_val;
 
 static std::map<std::string, Token> kslova;
 
@@ -110,14 +110,14 @@ Token lexan (void)
 	      /* klicova slova nebo identifikatory */
 	      if (isalpha(ch)) {
 		  do {
-		      str << ch;
+		      str << (char)ch;
 		      ch = GETCHAR();
 		  } while (isalnum(ch) || ch == '_');
 		  UNGETCH();
 		  
-		  lexan_val.str = str.str();
-		  std::map<std::string, Token>::const_iterator i;
-		  if ((i = kslova.find(lexan_val.str)) != kslova.end())
+		  yylval.str = new std::string(str.str());
+                  std::map<std::string, Token>::const_iterator i;
+                  if ((i = kslova.find(*yylval.str)) != kslova.end())
 		      return i->second;
 		  else
 		      return TOK_IDENT;
@@ -160,12 +160,12 @@ Token lexan (void)
 	  case '\\':
 	      goto lexan_retezec_esc;
 	  case '"': {
-	      lexan_val.str = str.str();
+	      yylval.str = new std::string(str.str());
 	      token = TOK_STRING;
 	      goto lexan_konec;
 	  }
 	  default: {
-	      str << ch;
+	      str << (char)ch;
 	      goto lexan_retezec;
 	  }
 	  }
@@ -189,7 +189,7 @@ Token lexan (void)
 		  UNGETCH();
 		  goto lexan_retezec_esc_oct;
 	      }
-	      str << ch;
+	      str << (char) ch;
 	      goto lexan_retezec;
 	  }
 	  }
@@ -292,7 +292,7 @@ Token lexan (void)
 	  case '\\':
 	      goto lexan_znak_esc;
 	  default: {
-	      lexan_val.chval = ch;
+	      yylval.charval = ch;
 	      goto lexan_znak_konec;
 	  }
 	  }
@@ -301,15 +301,15 @@ Token lexan (void)
       lexan_znak_esc: {
 	  ch = GETCHAR();
 	  switch (ch) {
-	  case 'a': lexan_val.chval = '\a'; break;
-	  case 'b': lexan_val.chval = '\b'; break;
-	  case 'f': lexan_val.chval = '\f'; break;
-	  case 'n': lexan_val.chval = '\n'; break;
-	  case 'r': lexan_val.chval = '\r'; break;
-	  case 't': lexan_val.chval = '\t'; break;
-	  case 'v': lexan_val.chval = '\v'; break;
+	  case 'a': yylval.charval = '\a'; break;
+	  case 'b': yylval.charval = '\b'; break;
+	  case 'f': yylval.charval = '\f'; break;
+	  case 'n': yylval.charval = '\n'; break;
+	  case 'r': yylval.charval = '\r'; break;
+	  case 't': yylval.charval = '\t'; break;
+	  case 'v': yylval.charval = '\v'; break;
 	  default:
-	      lexan_val.chval = ch;
+	      yylval.charval = ch;
 	      goto lexan_znak_konec;
 	  }
 	  
@@ -1069,11 +1069,11 @@ Token lexan (void)
 	  if (! fp) {
 	      UNGETCH();
 	      if (x > 0) {
-		  lexan_val.uintval = (unsigned long long int)x;
+		  yylval.uintval = (unsigned long long int)x;
 		  return TOK_UINTNUM;
 	      }
 	      else {
-		  lexan_val.intval = (long long int)x;
+		  yylval.intval = (long long int)x;
 		  return TOK_INTNUM;
 	      }
 	  }
@@ -1105,7 +1105,7 @@ Token lexan (void)
 
 	cislo_konec:
 	  UNGETCH();
-	  lexan_val.fpval = x * pow(10, exp + esign*eexp);
+	  yylval.fpval = x * pow(10, exp + esign*eexp);
 	  return TOK_FPNUM;
       }
     }
@@ -1129,7 +1129,7 @@ Token lexan (void)
 void lexan_init(std::istream & input)
 {
     lexan_input = &input;
-    lexan_input->exceptions(std::ios::failbit | std::ios::badbit);
+    lexan_input->exceptions(std::ios::failbit | std::ios::badbit | std::ios::eofbit);
     
     kslova.insert(std::make_pair(std::string("int"), TOK_INT));
     kslova.insert(std::make_pair(std::string("char"), TOK_CHAR));

@@ -1,4 +1,6 @@
 %{
+#include <iostream>
+
 #define YYPARSE_PARAM ptr 
 #define YYERROR_VERBOSE 1
 #define YYDEBUG 1
@@ -8,19 +10,8 @@ extern int yylex (void);
 void yyerror (char *s);
 
 #include "ast.hxx"
-
-union yystype {
-    CUnOp::Type unopt;
-    CBinOp::Type binopt;
-    CDeclSpec::Type dstp;
-    CTypeSpec::Type tstp;
-    ASTBase * ast;
-};
-#define YYSTYPE yystype
-
-#include <iostream>
+#include "defines.hxx"
 #include "lexan.hxx"
-
 %}
 
 %token TOK_INT TOK_CHAR TOK_LONG TOK_UNSIGNED TOK_FLOAT TOK_DOUBLE TOK_SIGNED TOK_SHORT
@@ -40,7 +31,7 @@ union yystype {
 primary_expression
         : TOK_IDENT
         {
-            $$.ast = new CIdent(lexan_val.str);
+            $$.ast = new CIdent(*$1.str);
         }
         
         | constant
@@ -62,17 +53,17 @@ primary_expression
 constant
         : TOK_FPNUM
         {
-            $$.ast = new CFloatExpr(lexan_val.fpval);
+            $$.ast = new CFloatExpr($1.fpval);
         }
         
         | TOK_INTNUM
         {
-            $$.ast = new CIntExpr(lexan_val.intval);
+            $$.ast = new CIntExpr($1.intval);
         }
         
         | TOK_UINTNUM
         {
-            $$.ast = new CUIntExpr(lexan_val.uintval);
+            $$.ast = new CUIntExpr($1.uintval);
         }
         
         | TOK_CHARVAL
@@ -697,7 +688,7 @@ declarator
 direct_declarator
         : TOK_IDENT
         {
-            $$.ast = new CIdent(lexan_val.str);
+            $$.ast = new CIdent(*$1.str);
         }
         
         | '(' declarator ')'
