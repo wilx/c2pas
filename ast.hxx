@@ -141,7 +141,7 @@ public:
                Assign, MultAss, DivAss, ModAss, PlusAss, MinusAss, LShiftAss,
                RShiftAss, BAndAss, BOrAss, XorAss};
 protected:
-    const CExpr * left, * right;
+    const CExpr * const left, * const right;
     const Type binopt;
 public:
     CBinOp (CBinOp::Type, const CExpr *, const CExpr *);
@@ -159,7 +159,7 @@ public:
     enum Type {Star, Tilde, Excl, And, Plus, Minus, PreInc, PreDec, PostInc, 
 	       PostDec};
 protected:
-    const CExpr * a;
+    const CExpr * const a;
     const Type unopt;
 public:
     CUnOp (Type, const CExpr *);
@@ -203,10 +203,11 @@ class CDeclSpec;
 class CInitDecl;
 class CDecl : public ASTBase, public ASTList {
 protected:
-    const CDeclSpec * dsp;
-    const CInitDecl * id;
+    const CDeclSpec * const dsp;
+    const CInitDecl * const id;
 public:
-    CDecl (const CDeclSpec *, const CInitDecl *, const CDecl *);
+    CDecl (const CDeclSpec *, const CInitDecl *, 
+	   const CDecl *);
     CDecl (const CDecl &);
     virtual ~CDecl ();
     virtual ASTBase * clone () const;
@@ -231,10 +232,11 @@ class CDeclarator;
 class CInitializer;
 class CInitDecl : public ASTBase, public ASTList {
 private:
-    const CDeclarator * dc;
-    const CExpr * in;
+    const CDeclarator * const dc;
+    const CExpr * const in;
 public:
-    CInitDecl (const CDeclarator *, const CExpr *, const CInitDecl *);
+    CInitDecl (const CDeclarator *, const CExpr *, 
+	       const CInitDecl *);
     CInitDecl (const CInitDecl &);
     virtual ~CInitDecl ();
     const CDeclarator * declarator () const;
@@ -261,7 +263,7 @@ public:
     enum Type {Pointer, DirectDecl};
 protected:
     const Type dct;
-    const CIdent * id;
+    const CIdent * const id;
 public:
     CDeclarator (Type, const CIdent *);
     CDeclarator (const CDeclarator &);
@@ -286,7 +288,7 @@ public:
 //
 class CExprStatement : public CStatement {
 protected:
-    const CExpr * ex;
+    const CExpr * const ex;
 public:
     CExprStatement (const CExpr *, const CStatement *);
     CExprStatement (const CExprStatement &);
@@ -298,8 +300,8 @@ public:
 //
 class CCompoundStatement : public CStatement {
 protected:
-    const CDecl * dcls;
-    const CStatement * stmts;
+    const CDecl * const dcls;
+    const CStatement * const stmts;
 public:
     CCompoundStatement (const CDecl *, const CStatement *, const CStatement *);
     CCompoundStatement (const CCompoundStatement &);
@@ -315,8 +317,8 @@ public:
     enum Type {If, Switch};
 private:
     const Type sstp;
-    const CExpr * ex;
-    const CStatement * s1, * s2;
+    const CExpr * const ex;
+    const CStatement * const s1, * const s2;
 public:
     CSelectionStatement (Type, const CExpr *, const CStatement *, 
 			 const CStatement *, const CStatement *);
@@ -335,8 +337,8 @@ public:
     enum Type {Label, Case, Default};
 protected:
     const Type lstp;
-    const CStatement * st;
-    const CConstExpr * ex;
+    const CStatement * const st;
+    const CConstExpr * const ex;
 public:
     CLabeledStatement (Type, const CConstExpr *, const CStatement *, 
 		       const CStatement *);
@@ -354,7 +356,7 @@ public:
     enum Type {Goto, Continue, Break, Return};
 protected:
     const Type jstp;
-    const CExpr * ex; // pro return
+    const CExpr * const ex; // pro return
 public:
     CJumpStatement (Type, const CExpr *, const CStatement *);
     CJumpStatement (const CJumpStatement &);
@@ -377,7 +379,7 @@ protected:
             const CExpr * in, * cnd, * ac;
         };
     };
-    const CStatement * st;
+    const CStatement * const st;
 public:
     CIterationStatement (Type, const CExpr *, const CStatement *, 
 			 const CStatement *);
