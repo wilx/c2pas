@@ -1,4 +1,11 @@
 #include "ast.hxx"
+#include <cstdio>
+
+/* CExpr */
+bool CExpr::isexpr () const
+{
+    return true;
+}
 
 /* CConstExpr */
 CConstExpr::CConstExpr (CConstExpr::Type t, AllTypes v)
@@ -23,19 +30,19 @@ AllTypes CConstExpr::value () const
 
 /* CFloatExpr */
 CFloatExpr::CFloatExpr (long double v)
-    : CConstExpr(FloatExpr, v)
+    : CConstExpr(Float, v)
 {
 }
 
 /* CIntExpr */
 CIntExpr::CIntExpr (long long int v)
-    : CConstExpr(IntExpr, v)
+    : CConstExpr(Int, v)
 {
 }
 
 /* CUIntExpr */
 CUIntExpr::CUIntExpr (unsigned long long int v)
-    : CConstExpr(UIntExpr, v)
+    : CConstExpr(UInt, v)
 {
 }
 
@@ -56,8 +63,8 @@ COp::Type COp::type () const
 }
 
 /* CBinOp */
-CBinOp::CBinOp (Type tp, CExpr * l, CExpr * r)
-    : COp(BinaryOp), left(l), right(r), binopt(tp)
+CBinOp::CBinOp (CBinOp::Type tp, CExpr * l, CExpr * r)
+    : COp(COp::Binary), left(l), right(r), binopt(tp)
 {
 }
 
@@ -94,7 +101,7 @@ CUnOp::~CUnOp ()
 }
 
 CUnOp::CUnOp (CUnOp::Type t, CExpr * x)
-    : COp(UnaryOp), arg(x), unopt(t)
+    : COp(COp::Unary), arg(x), unopt(t)
 {
 }
 
@@ -108,3 +115,62 @@ CUnOp::Type CUnOp::unop_type () const
     return unopt;
 }
 
+/* CStatement */
+CStatement::CStatement (CStatement::Type t)
+    : stmtt(t)
+{
+}
+
+bool CStatement::isexpr () const
+{
+    return false;
+}
+
+CStatement::Type CStatement::stmt_type () const
+{
+    return stmtt;
+}
+
+/* ASTList */
+ASTList::ASTList (ASTBase * n)
+    : nxt(n)
+{
+}
+
+ASTBase * ASTList::next () const
+{
+    return nxt;
+}
+
+ASTBase * ASTList::setNext (ASTBase * n)
+{
+    ASTBase * old = nxt;
+    nxt = n;
+    return old;
+}
+
+bool ASTList::isexpr () const
+{
+    return false;
+}
+
+ASTBase * ASTList::clone () const
+{
+    return new ASTList(nxt ? nxt->clone() : NULL);
+}
+
+/* CExprStatement */
+CExprStatement::CExprStatement (CExpr * e)
+    : CStatement(CStatement::Expr), expr(e)
+{
+}
+
+CExpr * CExprStatement::getExpr () const
+{
+    return expr;
+}
+
+ASTBase * CExprStatement::clone () const
+{
+    return new CExprStatement((CExpr *)expr->clone());
+}

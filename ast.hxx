@@ -3,14 +3,18 @@
 
 class ASTBase {
 public:
+    virtual bool isexpr () const = 0; 
     virtual ASTBase * clone () const = 0;
 };
 
-//
+/*
+  Vyrazy
+*/
 class CExpr : public ASTBase {
-public:
+public: 
     virtual CExpr * simplify ();
     virtual bool isconst () const = 0;
+    virtual bool isexpr () const;
 };
 
 //
@@ -59,7 +63,7 @@ union AllTypes {
 //
 class CConstExpr : public CExpr {
 public:
-    enum Type {CharExpr, FloatExpr, IntExpr, UIntExpr, BoolExpr, StringExpr};
+    enum Type {Char, Float, Int, UInt, Bool, String};
 private:
     Type tp;
 protected:
@@ -95,11 +99,11 @@ public:
 //
 class COp : public CExpr {
 public:
-    enum Type {UnaryOp, BinaryOp, TernaryOp};
+    enum Type {Unary, Binary, Ternary};
 protected:
     Type t;
 public:
-    COp (Type);
+    COp (COp::Type);
     
     virtual bool isconst () const;
     Type type () const;
@@ -108,14 +112,13 @@ public:
 //
 class CBinOp : public COp {
 public:
-    enum Type {PlusBOp, MinusBOp, MultBOp, DivBOp, ModBOp, LShiftBOp, RShiftBOp,
-               BAndBOp, BOrBOp, LAndBOp, LOrBOp, EqBOp, NEqBOp, LEqBOp, GEqBOp,
-               LeBOp, GtBOp, XorBOp};
+    enum Type {Plus, Minus, Mult, Div, Mod, LShift, RShift, BAnd, BOr, LAnd, LOr, 
+               Eq, NEq, LEq, GEq, Le, Gt, Xor};
 protected:
     CExpr * left, * right;
     Type binopt;
 public:
-    CBinOp (Type, CExpr *, CExpr *);
+    CBinOp (CBinOp::Type, CExpr *, CExpr *);
     virtual ~CBinOp ();
     
     CExpr * leftArg () const;
@@ -127,17 +130,58 @@ public:
 //
 class CUnOp : public COp {
 public:
-    enum Type {StarUOp, TildeUOp, ExclUOp, AndUOp, PlusUOp, MinusUOp, PreIncUOp,
-               PreDecUOp, PostIncUOp, PostDecUOp, NotUOp};
+    enum Type {Star, Tilde, Excl, And, Plus, Minus, PreInc, PreDec, PostInc, PostDec};
 protected:
     CExpr * arg;
     Type unopt;
 public:
-    CUnOp (Type, CExpr *);
+    CUnOp (CUnOp::Type, CExpr *);
     virtual ~CUnOp ();
 
     Type unop_type () const;
     virtual CExpr * clone () const;
 };
 
+/*
+  Statements
+*/
+
+class CStatement : public ASTBase {
+public:
+    enum Type {Labeled, Compound, Expr, Selection, Iteration, Jump};
+protected:
+    Type stmtt;
+public:
+    CStatement (Type);
+    Type stmt_type () const;
+    bool isexpr () const;
+};
+
+//
+class CExprStatement : public CStatement {
+protected:
+    CExpr * expr;
+public:
+    CExprStatement (CExpr *);
+    CExpr * getExpr () const;
+    virtual ASTBase * clone () const;
+};
+
+//
+class ASTList : public ASTBase {
+private:
+    ASTBase * nxt;
+public:
+    ASTList (ASTBase *);
+    ASTBase * next () const;
+    ASTBase * setNext (ASTBase *);
+    virtual bool isexpr () const;
+    virtual ASTBase * clone () const;
+};
+
+//
+/*class CCompoundStatement : public CStatement {
+protected:
+    
+};*/
 #endif // _AST_HXX_
