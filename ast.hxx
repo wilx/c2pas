@@ -180,34 +180,30 @@ class ASTList {
 protected:
   _Elem * nxt;
 public:
-  /*ASTList ()
-    : nxt(NULL)
-    { }*/
-  
-  explicit ASTList (const _Elem * n)
-    : nxt(const_cast<_Elem *>(n))
-  { }
+    explicit ASTList (const _Elem * n)
+      : nxt(const_cast<_Elem *>(n))
+    { }
 
-  ASTList (const ASTList & l)
-    : nxt(l.next() ? l.next()->clone() : NULL)
-  { }
+    ASTList (const ASTList & l)
+      : nxt(l.next() ? l.next()->clone() : NULL)
+    { }
 
-  virtual ~ASTList ()
-  {
-    delete nxt;
-  }
+    virtual ~ASTList ()
+    {
+        delete nxt;
+    }
 
-  _Elem * next () const
-  {
-    return nxt;
-  }
+    _Elem * next () const
+    {
+        return nxt;
+    }
 
-  _Elem * setNext (const _Elem * n)
-  {
-    _Elem * old = nxt;
-    nxt = const_cast<_Elem *>(n);
-    return old;
-  }
+    _Elem * setNext (const _Elem * n)
+    {
+        _Elem * old = nxt;
+        nxt = const_cast<_Elem *>(n);
+        return old;
+    }
 };
 
 //
