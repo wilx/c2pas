@@ -12,6 +12,8 @@ void yyerror (char *s);
 union yystype {
     CUnOp::Type unopt;
     CBinOp::Type binopt;
+    CDeclSpec::Type dstp;
+    CTypeSpec::Type tstp;
     ASTBase * ast;
 };
 #define YYSTYPE yystype
@@ -43,7 +45,7 @@ primary_expression
         
         | constant
         {
-            $$.ast == $1.ast;
+            $$.ast = $1.ast;
         }
         
         | TOK_STRING
@@ -472,26 +474,72 @@ constant_expression
 
 declaration
         : declaration_specifiers ';'
+        {
+            $$.ast = new CDecl((CDeclSpec *)$1.ast, NULL, NULL);
+        }
+        
         | declaration_specifiers init_declarator_list ';'
+        {
+            $$.ast = new CDecl((CDeclSpec *)$1.ast, (CInitDecl *)$2.ast, NULL);
+        }
         ;
 
 declaration_specifiers
         : storage_class_specifier
+        {
+            throw std::string("storage_class_specifier not supported");
+        }
+        
         | storage_class_specifier declaration_specifiers
+        {
+            $$.ast = $2.ast;
+        }
+        
         | type_specifier
+        {
+            $$.ast = new CTypeSpec($1.tstp, NULL); 
+        }
+        
         | type_specifier declaration_specifiers
+        {
+            $$.ast = new CTypeSpec($1.tstp, (CDeclSpec *)$2.ast);
+        }
+        
         | type_qualifier
+        {
+            throw std::string("type_qualifier not supported.");
+        }
+        
         | type_qualifier declaration_specifiers
+        {
+            $$.ast = $2.ast;
+        }
         ;
 
 init_declarator_list
         : init_declarator
-        | init_declarator_list ',' init_declarator
+        {
+            $$.ast = $1.ast;
+        }
+        
+        /* | init_declarator_list ',' init_declarator */
+        | init_declarator ',' init_declarator_list
+        {
+            ((CInitDecl *)($1.ast))->setNext((CInitDecl *)$3.ast);
+            $$.ast = $1.ast;
+        }
         ;
 
 init_declarator
         : declarator
+        {
+            $$.ast = new CInitDecl((CDeclarator *)$1.ast, NULL, NULL);
+        }
+        
         | declarator '=' initializer
+        {
+            $$.ast = new CInitDecl((CDeclarator *)$1.ast, (CExpr *)$3.ast, NULL);
+        }
         ;
 
 storage_class_specifier
@@ -504,23 +552,81 @@ storage_class_specifier
 
 type_specifier
         : TOK_VOID
+        {
+            $$.tstp = CTypeSpec::Void;
+        }
+        
         | TOK_CHAR
+        {
+            $$.tstp = CTypeSpec::Char;
+        }
+        
         | TOK_SHORT
+        {
+            $$.tstp = CTypeSpec::Short;
+        }
+        
         | TOK_INT
+        {
+            $$.tstp = CTypeSpec::Int;
+        }
+        
         | TOK_LONG
+        {
+            $$.tstp = CTypeSpec::Long;
+        }
+        
         | TOK_FLOAT
+        {
+            $$.tstp = CTypeSpec::Float;
+        }
+        
         | TOK_DOUBLE
+        {
+            $$.tstp = CTypeSpec::Double;
+        }
+        
         | TOK_SIGNED
+        {
+            $$.tstp = CTypeSpec::Signed;
+        }
+        
         | TOK_UNSIGNED
+        {
+            $$.tstp = CTypeSpec::Unsigned;
+        }
+        
         | struct_or_union_specifier
+        {
+            throw std::string("struct_or_union_specifier not supported.");
+        }
+        
         | enum_specifier
+        {
+            throw std::string("enum_specifier not supported.");
+        }
+        
         | TYPE_NAME
+        {
+            throw std::string("TYPE_NAME not supported.");
+        }
         ;
 
 struct_or_union_specifier
         : struct_or_union TOK_IDENT '{' struct_declaration_list '}'
+        {
+            throw std::string("struct_or_union_specifier not supported.");
+        }
+        
         | struct_or_union '{' struct_declaration_list '}'
+        {
+            throw std::string("struct_or_union_specifier not supported.");
+        }
+        
         | struct_or_union TOK_IDENT
+        {
+            throw std::string("struct_or_union_specifier not supported.");
+        }
         ;
 
 struct_or_union
@@ -577,18 +683,54 @@ type_qualifier
         ;
 
 declarator
-        : pointer direct_declarator /*bez ukazatelu*/
+        : pointer direct_declarator
+        {
+            throw std::string("Pointers not supported.");
+        }
+        
         | direct_declarator
+        {
+            $$.ast = new CDeclarator(CDeclarator::DirectDecl, (CIdent *)$1.ast);
+        }
         ;
 
 direct_declarator
         : TOK_IDENT
-        | '(' declarator ')' /* pouze jednoduche deklarace */
+        {
+            $$.ast = new CIdent(lexan_val.str);
+        }
+        
+        | '(' declarator ')'
+        {
+            $$.ast = $2.ast;
+        }
+        
         | direct_declarator '[' constant_expression ']'
+        {
+            throw std::string("Arrays not supported.");
+        }
+        
         | direct_declarator '[' ']'
+        {
+            throw std::string("Arrays not supported.");
+        }
+        
         | direct_declarator '(' parameter_type_list ')'
+        {
+            throw std::string("direct_declarator '(' parameter_type_list ')' "
+                              "not supported.");
+        }
+        
         | direct_declarator '(' identifier_list ')'
+        {
+            throw std::string("direct_declarator '(' identifier_list ')' "
+                              "not supported.");
+        }
+        
         | direct_declarator '(' ')'
+        {
+            /* !!! doplnit !!! */
+        }
         ;
 
 pointer
@@ -631,8 +773,19 @@ type_name
 
 abstract_declarator
         : pointer
+        {
+            throw std::string("abstract_declarator not supported.");
+        }
+        
         | direct_abstract_declarator
+        {
+            throw std::string("abstract_declarator not supported.");
+        }
+        
         | pointer direct_abstract_declarator
+        {
+            throw std::string("abstract_declarator not supported.");
+        }
         ;
 
 direct_abstract_declarator
@@ -649,8 +802,19 @@ direct_abstract_declarator
 
 initializer
         : assignment_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | '{' initializer_list '}'
+        {
+            throw std::string("Initializers of structured types not supported.");
+        }
+        
         | '{' initializer_list ',' '}'
+        {
+            throw std::string("Initializers of structured types not supported.");
+        }
         ;
 
 initializer_list
@@ -660,60 +824,186 @@ initializer_list
 
 statement
         : labeled_statement
+        {
+            $$.ast = $1.ast;
+        }
+        
         | compound_statement
+        {
+            $$.ast = $1.ast;
+        }
+        
         | expression_statement
+        {
+            $$.ast = $1.ast;
+        }
+        
         | selection_statement
+        {
+            $$.ast = $1.ast;
+        }
+        
         | iteration_statement
+        {
+            $$.ast = $1.ast;
+        }
+        
         | jump_statement
+        {
+            $$.ast = $1.ast;
+        }
         ;
 
 labeled_statement
         : TOK_IDENT ':' statement
+        {
+            throw std::string("Labels not supported.");
+        }
+        
         | TOK_CASE constant_expression ':' statement
+        {
+            $$.ast = new CLabeledStatement(CLabeledStatement::Case, 
+                (CConstExpr *)$2.ast, (CStatement *)$4.ast, NULL);
+        }
+        
         | TOK_DEFAULT ':' statement
+        {
+            $$.ast = new CLabeledStatement(CLabeledStatement::Default, NULL, 
+                (CStatement *)$3.ast, NULL);
+        }
         ;
 
 compound_statement
         : '{' '}'
+        {
+            //$$.ast = NULL; // ???
+            $$.ast = new CCompoundStatement(NULL, NULL, NULL);
+        }
+        
         | '{' statement_list '}'
+        {
+            $$.ast = new CCompoundStatement(NULL, (CStatement *)$2.ast, NULL);
+        }
+        
         | '{' declaration_list '}'
+        {
+            $$.ast = new CCompoundStatement((CDecl *)$2.ast, NULL, NULL);
+        }
+        
         | '{' declaration_list statement_list '}'
+        {
+            $$.ast = new CCompoundStatement((CDecl *)$2.ast, (CStatement *)$3.ast, 
+                NULL);
+        }
         ;
 
 declaration_list
         : declaration
-        | declaration_list declaration
+        {
+            $$.ast = $1.ast;
+        }
+        
+        /* | declaration_list declaration */
+        | declaration declaration_list
+        {
+            ((CDecl *)$1.ast)->setNext($2.ast);
+            $$.ast = $1.ast;
+        }
         ;
 
 statement_list
         : statement
-        | statement_list statement
+        {
+            $$.ast = $1.ast;
+        }
+        
+        /* | statement_list statement */
+        | statement statement_list
+        {
+            ((CStatement *)$1.ast)->setNext($2.ast);
+            $$.ast = $1.ast;
+        }
         ;
 
 expression_statement
         : ';'
+        {
+            $$.ast = new CExprStatement(NULL, NULL);
+        }
+        
         | expression ';'
+        {
+            $$.ast = new CExprStatement((CExpr *)$1.ast, NULL);
+        }
         ;
 
 selection_statement
         : TOK_IF '(' expression ')' statement
+        {
+            throw std::string("'If' statement not supported.");
+        }
+        
         | TOK_IF '(' expression ')' statement TOK_ELSE statement
+        {
+            throw std::string("'If' statement not supported.");
+        }
+        
         | TOK_SWITCH '(' expression ')' statement
+        {
+            $$.ast = new CSelectionStatement(CSelectionStatement::Switch, 
+                (CExpr *)$3.ast, (CStatement *)$5.ast, NULL, NULL);
+        }
         ;
 
 iteration_statement
         : TOK_WHILE '(' expression ')' statement
+        {
+            $$.ast = new CIterationStatement(CIterationStatement::While, 
+                (CExpr *)$3.ast, (CStatement *)$5.ast, NULL);
+        }
+        
         | TOK_DO statement TOK_WHILE '(' expression ')' ';'
+        {
+            throw std::string("'Do' statement not supported.");
+        }
+        
         | TOK_FOR '(' expression_statement expression_statement ')' statement
+        {
+            throw std::string("'For' statement not supported.");
+        }
+        
         | TOK_FOR '(' expression_statement expression_statement expression ')' statement
+        {
+            throw std::string("'For' statement not supported.");
+        }
         ;
 
 jump_statement
         : TOK_GOTO TOK_IDENT ';'
+        {
+            throw std::string("'Goto' statement not supported.");
+        }
+        
         | TOK_CONTINUE ';'
+        {
+            $$.ast = new CJumpStatement(CJumpStatement::Continue, NULL, NULL);
+        }
+        
         | TOK_BREAK ';'
+        {
+            $$.ast = new CJumpStatement(CJumpStatement::Break, NULL, NULL);
+        }
+        
         | TOK_RETURN ';'
+        {
+            $$.ast = new CJumpStatement(CJumpStatement::Return, NULL, NULL);
+        }
+        
         | TOK_RETURN expression ';'
+        {
+            $$.ast = new CJumpStatement(CJumpStatement::Return, (CExpr *)$2.ast, 
+                NULL);
+        }
         ;
 
 translation_unit
@@ -723,14 +1013,36 @@ translation_unit
 
 external_declaration
         : function_definition
+        {
+            *((CCompoundStatement **)YYPARSE_PARAM) = (CCompoundStatement *)$1.ast;
+        }
+        
         | declaration
+        {
+            throw std::string("External declaration not supported.");
+        }
         ;
 
 function_definition
         : declaration_specifiers declarator declaration_list compound_statement
+        {
+            $$.ast = $4.ast;
+        }
+        
         | declaration_specifiers declarator compound_statement
+        {
+            $$.ast = $3.ast;
+        }
+        
         | declarator declaration_list compound_statement
+        {
+            $$.ast = $3.ast;
+        }
+        
         | declarator compound_statement
+        {
+            $$.ast = $2.ast;
+        }
         ;
 
 %%

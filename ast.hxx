@@ -175,30 +175,6 @@ public:
 };
 
 //
-class CStatement : public ASTBase, public ASTList {
-public:
-    enum Type {Labeled, Compound, Expr, Selection, Iteration, Jump};
-protected:
-    Type stmtt;
-public:
-    CStatement (Type, CStatement *);
-    Type stmt_type () const;
-    virtual ASTBase * clone () const;
-};
-
-//
-class CExprStatement : public CStatement {
-protected:
-    CExpr * ex;
-public:
-    CExprStatement (CExpr *);
-    CExprStatement (const CExprStatement &);
-    virtual ~CExprStatement ();
-    CExpr * expr () const;
-    virtual ASTBase * clone () const;
-};
-
-//
 class CIdent : public ASTBase {
 protected:
     std::string nm;
@@ -213,12 +189,12 @@ public:
 //
 class CDeclSpec;
 class CInitDecl;
-class CDecl : public ASTBase {
+class CDecl : public ASTBase, public ASTList {
 protected:
     CDeclSpec * dsp;
     CInitDecl * id;
 public:
-    CDecl (CDeclSpec *, CInitDecl *);
+    CDecl (CDeclSpec *, CInitDecl *, CDecl *);
     CDecl (const CDecl &);
     virtual ~CDecl ();
     virtual ASTBase * clone () const;
@@ -262,7 +238,7 @@ public:
 protected:
     Type tstp;
 public:
-    CTypeSpec (CTypeSpec::Type, CTypeSpec *); 
+    CTypeSpec (CTypeSpec::Type, CDeclSpec *); 
     Type typespec_type () const;
     virtual ASTBase * clone () const;
 };
@@ -281,6 +257,30 @@ public:
     virtual ASTBase * clone () const;
     Type declarator_type () const;
     CIdent * ident () const;
+};
+
+//
+class CStatement : public ASTBase, public ASTList {
+public:
+    enum Type {Labeled, Compound, Expr, Selection, Iteration, Jump};
+protected:
+    Type stmtt;
+public:
+    CStatement (Type, CStatement *);
+    Type stmt_type () const;
+    virtual ASTBase * clone () const;
+};
+
+//
+class CExprStatement : public CStatement {
+protected:
+    CExpr * ex;
+public:
+    CExprStatement (CExpr *, CStatement *);
+    CExprStatement (const CExprStatement &);
+    virtual ~CExprStatement ();
+    CExpr * expr () const;
+    virtual ASTBase * clone () const;
 };
 
 //
@@ -323,13 +323,15 @@ public:
 protected:
     Type lstp;
     CStatement * st;
+    CConstExpr * ex;
 public:
-    CLabeledStatement (Type, CStatement *, CStatement *);
+    CLabeledStatement (Type, CConstExpr *, CStatement *, CStatement *);
     CLabeledStatement (const CLabeledStatement &);
     virtual ~CLabeledStatement ();
     virtual ASTBase * clone () const;
     Type labeledstmt_type () const;
     CStatement * statement () const;
+    CConstExpr * expr () const;
 };
 
 //
@@ -346,5 +348,32 @@ public:
     virtual ASTBase * clone () const;
     Type jumpstmt_type () const;
     CExpr * expr () const;
+};
+
+class CIterationStatement : public CStatement {
+public:
+    enum Type {While, Do, For};
+protected:
+    Type istp;
+    union {
+        struct {
+            CExpr * ex;
+        };
+        struct {
+            CExpr * in, * cnd, * ac;
+        };
+    };
+    CStatement * st;
+public:
+    CIterationStatement (Type, CExpr *, CStatement *, CStatement *);
+    CIterationStatement (CExpr *, CExpr *, CExpr *, CStatement *, CStatement *);
+    CIterationStatement (const CIterationStatement &);
+    virtual ~CIterationStatement ();
+    virtual ASTBase * clone () const;
+    Type iterationstmt_type () const;
+    CExpr * cond () const;
+    CExpr * init () const;
+    CExpr * action () const;
+    CStatement * statement () const;
 };
 #endif // _AST_HXX_

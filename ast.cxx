@@ -195,22 +195,6 @@ ASTBase * ASTList::setNext (ASTBase * n)
     return old;
 }
 
-/* CStatement */
-CStatement::CStatement (CStatement::Type t, CStatement * n = NULL)
-    : ASTBase(ASTBase::Statement), ASTList(n), stmtt(t)
-{
-}
-
-CStatement::Type CStatement::stmt_type () const
-{
-    return stmtt;
-}
-
-ASTBase * CStatement::clone () const
-{
-    return new CStatement(*this);
-}
-
 /* CIdent */
 CIdent::CIdent (const std::string & n)
     : ASTBase(ASTBase::Ident), nm(n)
@@ -237,7 +221,7 @@ ASTBase * CIdent::clone () const
 }
 
 /* CTypeSpec */
-CTypeSpec::CTypeSpec (CTypeSpec::Type t, CTypeSpec * n = NULL)
+CTypeSpec::CTypeSpec (CTypeSpec::Type t, CDeclSpec * n)
     : CDeclSpec(CDeclSpec::TypeSpec, n), tstp(t)
 {
     if (t == Struct || t == Union || t == Enum || t == TypeName)
@@ -254,40 +238,14 @@ ASTBase * CTypeSpec::clone () const
     return new CTypeSpec(*this);
 }
 
-/* CExprStatement */
-CExprStatement::CExprStatement (CExpr * e)
-    : CStatement(CStatement::Expr), ex(e)
-{
-}
-
-CExprStatement::CExprStatement (const CExprStatement & x)
-    : CStatement(x), ex(x.expr() ? (CExpr *)x.expr()->clone() : NULL)
-{
-}
-
-CExprStatement::~CExprStatement ()
-{
-    delete ex;
-}
-
-CExpr * CExprStatement::expr () const
-{
-    return ex;
-}
-
-ASTBase * CExprStatement::clone () const
-{
-    return new CExprStatement(*this);
-}
-
 /* CDecl */
-CDecl::CDecl (CDeclSpec * d, CInitDecl * i)
-    : ASTBase(ASTBase::Decl), dsp(d), id(i)
+CDecl::CDecl (CDeclSpec * d, CInitDecl * i, CDecl * n)
+    : ASTBase(ASTBase::Decl), ASTList(n), dsp(d), id(i)
 {
 }
 
 CDecl::CDecl (const CDecl & x)
-    : ASTBase(x)
+    : ASTBase(x), ASTList(x)
 {
         dsp = x.declspec() ? (CDeclSpec *)x.declspec()->clone() : NULL;
         id = x.initdecl() ? (CInitDecl *)x.initdecl()->clone() : NULL;
@@ -398,6 +356,50 @@ CIdent * CDeclarator::ident () const
     return id;
 }
 
+/* CStatement */
+CStatement::CStatement (CStatement::Type t, CStatement * n)
+    : ASTBase(ASTBase::Statement), ASTList(n), stmtt(t)
+{
+}
+
+CStatement::Type CStatement::stmt_type () const
+{
+    return stmtt;
+}
+
+ASTBase * CStatement::clone () const
+{
+    return new CStatement(*this);
+}
+
+/* CExprStatement */
+CExprStatement::CExprStatement (CExpr * e, CStatement * n)
+    : CStatement(CStatement::Expr, n), ex(e)
+{
+}
+
+CExprStatement::CExprStatement (const CExprStatement & x)
+    : CStatement(x), ex(x.expr() ? (CExpr *)x.expr()->clone() : NULL)
+{
+}
+
+CExprStatement::~CExprStatement ()
+{
+    delete ex;
+}
+
+CExpr * CExprStatement::expr () const
+{
+    return ex;
+}
+
+ASTBase * CExprStatement::clone () const
+{
+    return new CExprStatement(*this);
+}
+
+
+
 /* CCompoundStatement */
 CCompoundStatement::CCompoundStatement (CDecl * d, CStatement * s, CStatement * n)
     : CStatement(CStatement::Compound, n), dcls(d), stmts(s)
@@ -480,8 +482,9 @@ CStatement * CSelectionStatement::statement2 () const
 }
 
 /* CLabeledStatement */
-CLabeledStatement::CLabeledStatement (Type t, CStatement * s, CStatement * n)
-    : CStatement(CStatement::Labeled, n), lstp(t), st(s)
+CLabeledStatement::CLabeledStatement 
+    (Type t, CConstExpr * e, CStatement * s,CStatement * n)
+    : CStatement(CStatement::Labeled, n), lstp(t), st(s), ex(e)
 {
 }
 
@@ -489,11 +492,13 @@ CLabeledStatement::CLabeledStatement (const CLabeledStatement & x)
     : CStatement(x), lstp(x.labeledstmt_type())
 {
     st = x.statement() ? (CStatement *)x.statement()->clone() : NULL;
+    ex = x.expr() ? (CConstExpr *)x.expr()->clone() : NULL;
 }
 
 CLabeledStatement::~CLabeledStatement ()
 {
     delete st;
+    delete ex;
 }
 
 ASTBase * CLabeledStatement::clone () const
@@ -509,6 +514,11 @@ CLabeledStatement::Type CLabeledStatement::labeledstmt_type () const
 CStatement * CLabeledStatement::statement () const
 {
     return st;
+}
+
+CConstExpr * CLabeledStatement::expr() const
+{
+    return ex;
 }
 
 /* CJumpStatement */
@@ -544,3 +554,85 @@ CExpr * CJumpStatement::expr () const
 {
     return ex;
 }
+
+/* CIterationStatement */
+CIterationStatement::CIterationStatement 
+    (CIterationStatement::Type t, CExpr * c, CStatement * s, CStatement *n)
+    : CStatement(CStatement::Iteration, n), istp(t), ex(c), st(s)
+{
+    if (t == For)
+        throw std::string("Use the other constructor for 'For' statement.");
+}
+    
+CIterationStatement::CIterationStatement
+    (CExpr * i, CExpr * c, CExpr * a, CStatement * s, CStatement * n)
+    : CStatement(CStatement::Iteration, n), istp(CIterationStatement::For), in(i), 
+      cnd(c), ac(a), st(s)
+{
+}
+
+CIterationStatement::CIterationStatement (const CIterationStatement & x)
+    : CStatement(x), istp(x.iterationstmt_type())
+{
+    switch (istp) {
+    case While:
+    case Do:
+        ex = (CExpr *)x.cond()->clone();
+        break;
+    case For:
+        in = x.init() ? (CExpr *)x.init()->clone() : NULL;
+        cnd = x.cond() ? (CExpr *)x.cond()->clone() : NULL;
+        ac = x.action() ? (CExpr *)x.action()->clone() : NULL;
+    }
+    st = x.statement() ? (CStatement *)x.statement()->clone() : NULL;
+}
+
+CIterationStatement::~CIterationStatement ()
+{
+    switch (istp) {
+    case While:
+    case Do:
+        delete ex;
+        break;
+    case For:
+        delete in;
+        delete cnd;
+        delete ac;
+    }
+    delete st;
+}
+
+CIterationStatement::Type CIterationStatement::iterationstmt_type () const
+{
+    return istp;
+}
+
+ASTBase * CIterationStatement::clone () const
+{
+    return new CIterationStatement(*this);
+}
+
+CExpr * CIterationStatement::cond () const
+{
+    return istp == For ? cnd : ex;
+}
+
+CExpr * CIterationStatement::init () const
+{
+    if (istp != For)
+        throw std::string("Only 'For' statement has initialization.");
+    return in;
+}
+
+CExpr * CIterationStatement::action () const
+{
+    if (istp != For)
+        throw std::string("Only 'For' statement has action.");
+    return ac;
+}
+
+CStatement * CIterationStatement::statement () const
+{
+    return st;
+}
+

@@ -1,3 +1,8 @@
+2003-01-09 Vaclav Haisman <V.Haisman@sh.cvut.cz>
+	* ast.cxx, ast.hxx: Korekce, nova trida.
+	* csynan.y: Komplet implementace semantickych akci.
+	* Makefile.am: Drobne upravy.
+	
 2003-01-08 Vaclav Haisman <V.Hasiman@sh.cvut.cz>
 	* ast.hxx: Nove prvky enum Type. Definice clone() pro konstantni
 	vyrazy.
