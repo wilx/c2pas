@@ -1,39 +1,122 @@
-
 #include "ast.hxx"
 
 /* CConstExpr */
-CConstExpr::CConstExpr (CConstExpr::Type t)
-    : type(t)
+CConstExpr::CConstExpr (CConstExpr::Type t, AllTypes v)
+    : tp(t), val(v)
 {
 }
 
-CConstExpr::Type CConstExpr::type ()
+CExpr * CConstExpr::simplify () const
 {
-    return type;
+    return clone();
 }
 
-bool CConstExpr::isconst ()
+const CConstExpr::Type CConstExpr::type () const
+{
+    return tp;
+}
+
+const bool CConstExpr::isconst () const
 {
     return true;
 }
 
-/* CBinOp */
-CBinOp::CBinOp (char o, CExpr * l, CExpr * r)
-    : op(o), left(l), right(r)
+const AllTypes CConstExpr::value () const
+{
+    return val;
+}
+
+/* CFloatExpr */
+CFloatExpr::CFloatExpr (long double v)
+    : CConstExpr(FloatExpr, v)
 {
 }
 
-CExpr * CBinOp::value ()
+/* CIntExpr */
+CIntExpr::CIntExpr (long long int v)
+    : CConstExpr(IntExpr, v)
 {
-    return new CBinOp(op, left->clone(), right->clone());
 }
 
-CExpr * CBinOp::clone ()
+/* CUIntExpr */
+CUIntExpr::CUIntExpr (unsigned long long int v)
+    : CConstExpr(UIntExpr, v)
 {
-    return new CBinOp(op, left->clone(), right->clone());
 }
 
-bool CBinOp::isconst ()
+/* COp */
+COp::COp (char o)
+    : op(o)
+{
+}
+
+const bool COp::isconst () const
 {
     return false;
+}
+
+const char COp::type () const
+{
+    return op;
+}
+
+/* CBinOp */
+CBinOp::CBinOp (char o, CExpr * l, CExpr * r)
+    : COp(o), left(l), right(r)
+{
+}
+
+CBinOp::~CBinOp ()
+{
+    delete left;
+    delete right;
+}
+
+CExpr * CBinOp::leftArg () const
+{
+    return left;
+}
+
+CExpr * CBinOp::rightArg () const
+{
+    return right;
+}
+
+CExpr * CBinOp::clone () const
+{
+    return new CBinOp(op, left->clone(), right->clone());
+}
+
+CExpr * CBinOp::simplify () const
+{
+    return clone();
+}
+
+/* CArithBinOp */
+CExpr * CArithBinOp::simplify () const
+{
+    /*if (left->isconst() && right->isconst()) {
+	switch (op) {
+	case '+': return new C
+	}
+    }
+    else*/ 
+    return clone();
+	
+}
+
+/* CUnOp */
+CExpr * CUnOp::clone () const
+{
+    return new CUnOp(op, arg->clone());
+}
+
+CUnOp::~CUnOp ()
+{
+    delete arg;
+}
+
+CExpr * CUnOp::simplify () const
+{
+    return clone();
 }
