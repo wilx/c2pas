@@ -1,6 +1,8 @@
 #ifndef _AST_HXX_
 #define _AST_HXX_
 
+#include <string>
+
 class ASTBase {
 public:
     virtual bool isexpr () const = 0; 
@@ -177,6 +179,28 @@ public:
     ASTBase * setNext (ASTBase *);
     virtual bool isexpr () const;
     virtual ASTBase * clone () const;
+};
+
+//
+class CIdent {
+protected:
+    std::string nm;
+public:
+    CIdent (const std::string &);
+    CIdent (const char *);
+    std::string name () const;
+};
+
+//
+class CTypeSpec : public ASTList {
+public:
+    enum Type {Void, Char, Short, Int, Long, Float, Double, Signed, Unsigned,
+               Struct, Union, Enum, TypeName};
+protected:
+    Type ttp;
+public:
+    CTypeSpec (CTypeSpec::Type, CTypeSpec *); 
+    Type typespec_type () const;
 };
 
 //

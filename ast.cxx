@@ -159,6 +159,33 @@ ASTBase * ASTList::clone () const
     return new ASTList(nxt ? nxt->clone() : NULL);
 }
 
+/* CIdent */
+CIdent::CIdent (const std::string & n)
+    : nm(n)
+{
+}
+
+CIdent::CIdent (const char * cstr)
+    : nm(cstr)
+{
+}
+
+std::string CIdent::name () const
+{
+    return nm;
+}
+
+/* CTypeSpec */
+CTypeSpec::CTypeSpec (CTypeSpec::Type t, CTypeSpec * n = NULL)
+    : ASTList(n), ttp(t)
+{
+}
+
+CTypeSpec::Type CTypeSpec::typespec_type () const
+{
+    return ttp;
+}
+
 /* CExprStatement */
 CExprStatement::CExprStatement (CExpr * e)
     : CStatement(CStatement::Expr), expr(e)
