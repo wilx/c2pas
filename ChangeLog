@@ -1,0 +1,3 @@
+2002-12-06 Vaclav Haisman <V.Haisman@sh.cvut.cz>
+        * genlexan.pl: Import generatoru lexikalniho analyzatoru.
+        * keywords.txt: Seznam klicovych slov pro generator.
