@@ -20,11 +20,14 @@ public:
   Vyrazy
 */
 class CExpr : public ASTBase {
+public:
+    enum Type {Const, Op, Ident};
 protected:
-    CExpr ();
+    Type et;
 public: 
+    CExpr (Type);
     virtual CExpr * simplify () const;
-    virtual bool isconst () const = 0;
+    Type expr_type () const;
 };
 
 //
@@ -80,8 +83,6 @@ protected:
     AllTypes val;
 public:    
     CConstExpr (Type, AllTypes);
-
-    virtual bool isconst () const;
     Type const_type () const;
     AllTypes value () const;
 };
@@ -108,6 +109,19 @@ public:
 };
 
 //
+class CIdent;
+class CIdentExpr : public CExpr {
+protected:
+    CIdent * id;
+public:
+    CIdentExpr(CIdent *);
+    CIdentExpr(const CIdentExpr &);
+    virtual ~CIdentExpr ();
+    virtual ASTBase * clone () const;
+    CIdent * ident () const;
+};
+
+//
 class COp : public CExpr {
 public:
     enum Type {Unary, Binary, Ternary};
@@ -115,8 +129,6 @@ protected:
     Type t;
 public:
     COp (Type);
-    
-    virtual bool isconst () const;
     Type type () const;
 };
 
@@ -134,7 +146,6 @@ public:
     CBinOp (CBinOp::Type, CExpr *, CExpr *);
     CBinOp (const CBinOp &);
     virtual ~CBinOp ();
-    
     CExpr * leftArg () const;
     CExpr * rightArg () const;
     Type binop_type () const;
@@ -152,7 +163,6 @@ public:
     CUnOp (Type, CExpr *);
     CUnOp (const CUnOp &);
     virtual ~CUnOp ();
-
     CExpr * arg () const;
     Type unop_type () const;
     virtual CExpr * clone () const;

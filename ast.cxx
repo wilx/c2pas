@@ -13,8 +13,8 @@ ASTBase::Type ASTBase::type () const
 }
 
 /* CExpr */
-CExpr::CExpr ()
-    : ASTBase(ASTBase::Expr)
+CExpr::CExpr (CExpr::Type t)
+    : ASTBase(ASTBase::Expr), et(t)
 {
 }
 
@@ -23,20 +23,21 @@ CExpr * CExpr::simplify () const
     return (CExpr *)clone();
 }
 
+
+CExpr::Type CExpr::expr_type () const
+{
+    return et;
+}
+
 /* CConstExpr */
 CConstExpr::CConstExpr (CConstExpr::Type t, AllTypes v)
-    : tp(t), val(v)
+    : CExpr(CExpr::Const), tp(t), val(v)
 {
 }
 
 CConstExpr::Type CConstExpr::const_type () const
 {
     return tp;
-}
-
-bool CConstExpr::isconst () const
-{
-    return true;
 }
 
 AllTypes CConstExpr::value () const
@@ -77,15 +78,42 @@ ASTBase * CUIntExpr::clone () const
     return new CUIntExpr(*this);
 }
 
-/* COp */
-COp::COp (Type tp)
-    : t(tp)
+/* CIdentExpr */
+CIdentExpr::CIdentExpr(CIdent * i)
+    : CExpr(CExpr::Ident), id(i)
 {
+    if (! i)
+	throw std::string("CIdentExpr(NULL) not allowed");
+}
+    
+CIdentExpr::CIdentExpr(const CIdentExpr & x)
+    : CExpr(x)
+{
+    if (x.ident()) 
+	id = (CIdent *)x.ident()->clone();
+    else
+	throw std::string("CIdentExpr(NULL) not allowed");
 }
 
-bool COp::isconst () const
+CIdentExpr::~CIdentExpr ()
 {
-    return false;
+    delete id;
+}
+
+ASTBase * CIdentExpr::clone () const
+{
+    return new CIdentExpr(*this);
+}
+    
+CIdent * CIdentExpr::ident () const
+{
+    return id;
+}
+
+/* COp */
+COp::COp (Type tp)
+    : CExpr(CExpr::Op), t(tp)
+{
 }
 
 COp::Type COp::type () const

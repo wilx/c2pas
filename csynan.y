@@ -31,7 +31,7 @@ void yyerror (char *s);
 primary_expression
         : TOK_IDENT
         {
-            $$.ast = new CIdent(*$1.str);
+            $$.ast = new CIdentExpr(new CIdent(*$1.str));
         }
         
         | constant

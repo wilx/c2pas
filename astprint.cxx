@@ -3,6 +3,7 @@
 #include <cctype>
 #include <stdlib.h>
 #include <sstream>
+#include <iostream>
 #include "astprint.hxx"
 
 static std::list<int> blocklist;
@@ -130,6 +131,9 @@ insertident (const std::string & id, ASTInfo * ai)
 	pidents.insert(make_pair(lident, ai));
 	return make_pair(lident, ai);
     }
+    else {
+	throw std::string("Pro odstraneni warningu");
+    }
 }
 
 CDecl * gentmpdecl (CTypeSpec * ts)
@@ -137,45 +141,47 @@ CDecl * gentmpdecl (CTypeSpec * ts)
     static int tmpcount = 0;
     std::ostringstream str;
 
-    str << "__c2pas_tmpvar_" << ++tmpcount;
-    return new CDecl(ts, new InitDecl(new CDeclarator(CDeclarator::DirectDecl, 
-						      new CIdent(str.str())),
-				      NULL, NULL),
+    str << "__c2pas_tmpvar_" << (++tmpcount);
+    return new CDecl(ts, new CInitDecl(new CDeclarator(CDeclarator::DirectDecl,
+						       new CIdent(str.str())),
+				       NULL, NULL),
 		     NULL);
 }
 
 void astprint (CCompoundStatement * cs, ASTInfo * ai, 
-	       std::ostream & out = *outs);
+	       std::ostream & out);
 void astprint (CLabeledStatement * cs, CSelectionStatement * sw, ASTInfo * ai, 
-	       std::ostream & out = *outs)
+	       std::ostream & out);
 void astprint (CSelectionStatement * cs, ASTInfo * ai, 
-	       std::ostream & out = *outs);
-
+	       std::ostream & out);
+void astprint (CExpr *, ASTInfo *, std::ostream &);
 
 void astprint (CStatement * s, ASTInfo * ai,
-	       std::ostream & out = *outs)
+	       std::ostream & out)
 {
     switch (s->stmt_type()) {
     case CStatement::Labeled:
-	astprint((CLabeledStatement *)s, ai, out);
-	break;
+	throw std::string("'Labeled' statement handled within 'Selection' "
+			  "statement only");
     case CStatement::Compound:
-	astprint((CCompoundStatement *)s, ai, out);
+	astprint((CCompoundStatement *)s, new ASTInfo(ai, ++blocks), out);
 	break;
     case CStatement::Expr:
 	astprint((CExprStatement *)s, ai, out);
 	break;
     case CStatement::Iteration:
-	astprint((CIterationtatement *)s, ai, out);
+	astprint((CIterationStatement *)s, ai, out);
 	break;
     case CStatement::Jump:
 	astprint((CJumpStatement *)s, ai, out);
 	break;
+    case CStatement::Selection:
+	astprint((CSelectionStatement *)s, ai, out);
     }
 }
 
 void astprint (CCompoundStatement * cs, ASTInfo * ai, 
-	       std::ostream & out = *outs)
+	       std::ostream & out)
 {
     if (cs == NULL)
         return;
@@ -184,7 +190,7 @@ void astprint (CCompoundStatement * cs, ASTInfo * ai,
     CDecl * dcl = cs->declarations();
     while (dcl != NULL) {
 	decls.push_back(dcl);
-	dcl = dcl->next();
+	dcl = (CDecl *)dcl->next();
     }
     
     /* vystup bloku */
@@ -192,8 +198,8 @@ void astprint (CCompoundStatement * cs, ASTInfo * ai,
     CStatement * stmt = cs->statements();
     while (stmt != NULL) {
 	out << ";" << std::endl;
-	astprint(stmt);
-	stmt = stmt->next();
+	astprint(stmt, ai, out);
+	stmt = (CStatement *)stmt->next();
     }
     out << "end";
 
@@ -201,7 +207,7 @@ void astprint (CCompoundStatement * cs, ASTInfo * ai,
     astprint((CStatement *)cs->next(), ai, out);
 }
 
-void astprint (CLabeledStatement * cs, CSelectionStatement * sw, ASTInfo * ai, 
+/*void astprint (CLabeledStatement * cs, CIdentExpr * swe, ASTInfo * ai, 
 	       std::ostream & out = *outs)
 {
     switch(cs->labeledstmt_type()) {
@@ -214,31 +220,70 @@ void astprint (CLabeledStatement * cs, CSelectionStatement * sw, ASTInfo * ai,
 	astprint((CLabeledStatement *)cs, ai, out);
 	break;
     }
-}
+}*/
 
-void astprint (CSelectionStatement * cs, ASTInfo * ai, 
-	       std::ostream & out = *outs)
+void astprint (CSelectionStatement * ss, ASTInfo * ai, 
+	       std::ostream & out)
 {
-    if (cs->selectionstmt_type != CSelectionStatement::Switch)
+    if (ss->selectionstmt_type() != CSelectionStatement::Switch)
 	throw std::string("'If' statement not supported");
-    CExpr * swexpr;
-    if (cs->expr()->expr_type() != CExpr::IdentExpr) {
+    CIdentExpr * swexpr;
+    if (ss->expr()->expr_type() != CExpr::Ident) {
 	/* Vytvor docasnou promennou a prirazeni pokud je argument switche
 	   slozitejsi nez pouhy identifikator aby jsme ho nevyhodnocovali 
 	   vicekrat */
-	CDecl * tmpdecl = gentmpdecl();
+	CDecl * tmpdecl = gentmpdecl(new CTypeSpec(CTypeSpec::Long, NULL));
 	decls.push_back(tmpdecl);
 	CIdent * tmpident = tmpdecl->initdecl()->declarator()->ident();
 	CIdentExpr * idexpr = new CIdentExpr(new CIdent(*tmpident));
-	CBinOp * tmpass = new CBinOp(CBinOp::Assign, idexpr, cs->expr());
+	CBinOp * tmpass = new CBinOp(CBinOp::Assign, idexpr, ss->expr());
 	CExprStatement * estmt = new CExprStatement(new CBinOp(*tmpass), NULL);
 	astprint(estmt, ai, out);
 	swexpr = idexpr;
     }
     else {
-	swexpr = cs->expr();
+	swexpr = (CIdentExpr *)ss->expr();
     }
     
+    if (ss->statement1()->stmt_type() != CStatement::Compound)
+	throw std::string("Olny 'Compound' statement can follow 'switch'");
+    CCompoundStatement * swstmt = (CCompoundStatement *)ss->statement1();
+    CLabeledStatement * lstmt;
+    CStatement * stmt = swstmt->statements();;
+    while (stmt != NULL) {
+	switch (stmt->stmt_type()) {
+	case CStatement::Labeled:
+	    lstmt = (CLabeledStatement *)stmt;
+	    if (lstmt->labeledstmt_type() == CLabeledStatement::Case) {
+		out << "if (";
+		astprint(swexpr, ai, out);
+		out << " = ";
+		astprint(lstmt->expr(), ai, out);
+		out << ") then begin" << std::endl;
+		astprint(lstmt->statement(), ai, out);
+		out << std::endl << "end";
+	    }
+	    else if (lstmt->labeledstmt_type() == CLabeledStatement::Default) {
+		out << "else begin" << std::endl;
+		astprint(lstmt->statement(), ai, out);
+		out << std::endl << "end";
+	    }
+	    else
+		throw std::string("Only 'Case' and 'Default' labeled statement"
+				  " within 'switch' supported");
+	    out << ";" << std::endl;
+	    break;
+	default:
+	    throw std::string("Only 'Labeled' statement within 'switch' "
+			      "supported");
+	}
+	stmt = (CStatement *)stmt->next();
+    }
     
-    
+    /* pokracovani na dalsi statement */
+    astprint((CStatement *)ss->next(), ai, out);
+}
+
+void astprint (CExpr * e, ASTInfo * ai, std::ostream & out)
+{
 }
