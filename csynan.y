@@ -898,7 +898,8 @@ declaration_list
         /* | declaration_list declaration */
         | declaration declaration_list
         {
-            ((CDecl *)$1.ast)->setNext($2.ast);
+          (dynamic_cast<CDecl *>($1.ast))->setNext
+            (dynamic_cast<CDecl *>($2.ast));
             $$.ast = $1.ast;
         }
         ;
@@ -912,7 +913,8 @@ statement_list
         /* | statement_list statement */
         | statement statement_list
         {
-            ((CStatement *)$1.ast)->setNext($2.ast);
+          (dynamic_cast<CStatement *>($1.ast))->setNext
+            (dynamic_cast<CStatement *>($2.ast));
             $$.ast = $1.ast;
         }
         ;

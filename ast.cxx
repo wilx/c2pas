@@ -51,7 +51,7 @@ CFloatExpr::CFloatExpr (long double v)
 {
 }
 
-ASTBase * CFloatExpr::clone () const
+CFloatExpr * CFloatExpr::clone () const
 {
     return new CFloatExpr(*this);
 }
@@ -62,7 +62,7 @@ CIntExpr::CIntExpr (long long int v)
 {
 }
 
-ASTBase * CIntExpr::clone () const
+CIntExpr * CIntExpr::clone () const
 {
     return new CIntExpr(*this);
 }
@@ -73,7 +73,7 @@ CUIntExpr::CUIntExpr (unsigned long long int v)
 {
 }
 
-ASTBase * CUIntExpr::clone () const
+CUIntExpr * CUIntExpr::clone () const
 {
     return new CUIntExpr(*this);
 }
@@ -100,7 +100,7 @@ CIdentExpr::~CIdentExpr ()
     delete id;
 }
 
-ASTBase * CIdentExpr::clone () const
+CIdentExpr * CIdentExpr::clone () const
 {
     return new CIdentExpr(*this);
 }
@@ -154,7 +154,7 @@ CBinOp::Type CBinOp::binop_type () const
     return binopt;
 }
 
-CExpr * CBinOp::clone () const
+CBinOp * CBinOp::clone () const
 {
     return new CBinOp(*this);
 }
@@ -180,7 +180,7 @@ const CExpr * CUnOp::arg () const
     return a;
 }
 
-CExpr * CUnOp::clone () const
+CUnOp * CUnOp::clone () const
 {
     return new CUnOp(*this);
 }
@@ -193,34 +193,6 @@ CUnOp::Type CUnOp::unop_type () const
 /*
   Statements
 */
-
-/* ASTList */
-ASTList::ASTList (const ASTBase * n)
-    : nxt((ASTBase *)n)
-{
-}
-
-ASTList::ASTList (const ASTList & l)
-    : nxt(l.next() ? l.next()->clone() : NULL)
-{
-}
-
-ASTList::~ASTList ()
-{
-    delete nxt;
-}
-
-ASTBase * ASTList::next () const
-{
-    return nxt;
-}
-
-ASTBase * ASTList::setNext (const ASTBase * n)
-{
-    ASTBase * old = nxt;
-    nxt = (ASTBase *)n;
-    return old;
-}
 
 /* CIdent */
 CIdent::CIdent (const std::string & n)
@@ -242,7 +214,7 @@ std::string CIdent::name () const
     return nm;
 }
 
-ASTBase * CIdent::clone () const
+CIdent * CIdent::clone () const
 {
     return new CIdent(*this);
 }
@@ -260,14 +232,15 @@ CTypeSpec::Type CTypeSpec::typespec_type () const
     return tstp;
 }
 
-ASTBase * CTypeSpec::clone () const
+//ASTBase * CTypeSpec::clone () const
+CTypeSpec * CTypeSpec::clone () const
 {
     return new CTypeSpec(*this);
 }
 
 /* CDecl */
 CDecl::CDecl (const CDeclSpec * d, const CInitDecl * i, const CDecl * n)
-    : ASTBase(ASTBase::Decl), ASTList(n), dsp(d), id(i)
+    : ASTBase(ASTBase::Decl), ASTList<CDecl>(n), dsp(d), id(i)
 {
     if (! d)
 	throw std::string("declspec musi byt != NULL");
@@ -276,7 +249,7 @@ CDecl::CDecl (const CDeclSpec * d, const CInitDecl * i, const CDecl * n)
 }
 
 CDecl::CDecl (const CDecl & x)
-    : ASTBase(x), ASTList(x), 
+    : ASTBase(x), ASTList<CDecl>(x), 
       dsp(x.declspec() ? (CDeclSpec *)x.declspec()->clone() : NULL),
       id(x.initdecl() ? (CInitDecl *)x.initdecl()->clone() : NULL)
 {
@@ -288,7 +261,7 @@ CDecl::~CDecl ()
     delete id;
 }
     
-ASTBase * CDecl::clone () const
+CDecl * CDecl::clone () const
 {
     return new CDecl(*this);
 }
@@ -305,11 +278,11 @@ const CInitDecl * CDecl::initdecl () const
 
 /* CDeclSpec */
 CDeclSpec::CDeclSpec (CDeclSpec::Type t, const CDeclSpec * n)
-    : ASTBase(ASTBase::DeclSpec), ASTList(n), dstp(t)
+    : ASTBase(ASTBase::DeclSpec), ASTList<CDeclSpec>(n), dstp(t)
 {
 }
 
-ASTBase * CDeclSpec::clone () const
+CDeclSpec * CDeclSpec::clone () const
 {
     return new CDeclSpec(*this);
 }
@@ -322,12 +295,12 @@ CDeclSpec::Type CDeclSpec::declspec_type () const
 /* CInitDecl */
 CInitDecl::CInitDecl (const CDeclarator * d, const CExpr * i, 
 		      const CInitDecl * n)
-    : ASTBase(ASTBase::InitDecl), ASTList(n), dc(d), in(i)
+    : ASTBase(ASTBase::InitDecl), ASTList<CInitDecl>(n), dc(d), in(i)
 {
 }
 
 CInitDecl::CInitDecl (const CInitDecl & x)
-    : ASTBase(x), ASTList(x),
+    : ASTBase(x), ASTList<CInitDecl>(x),
       dc(x.declarator() ? (CDeclarator *)x.declarator()->clone() : NULL),
       in(x.initializer() ? (CExpr *)x.initializer()->clone() : NULL)
 {
@@ -349,7 +322,7 @@ const CExpr * CInitDecl::initializer () const
     return in;
 }
 
-ASTBase * CInitDecl::clone () const
+CInitDecl * CInitDecl::clone () const
 {
     return new CInitDecl(*this);
 }
@@ -373,7 +346,7 @@ CDeclarator::~CDeclarator ()
     delete id;
 }
 
-ASTBase * CDeclarator::clone () const
+CDeclarator * CDeclarator::clone () const
 {
     return new CDeclarator(*this);
 }
@@ -390,7 +363,7 @@ const CIdent * CDeclarator::ident () const
 
 /* CStatement */
 CStatement::CStatement (CStatement::Type t, const CStatement * n)
-    : ASTBase(ASTBase::Statement), ASTList(n), stmtt(t)
+  : ASTBase(ASTBase::Statement), ASTList<CStatement>(n), stmtt(t)
 {
 }
 
@@ -399,7 +372,7 @@ CStatement::Type CStatement::stmt_type () const
     return stmtt;
 }
 
-ASTBase * CStatement::clone () const
+CStatement * CStatement::clone () const
 {
     return new CStatement(*this);
 }
@@ -425,7 +398,7 @@ const CExpr * CExprStatement::expr () const
     return ex;
 }
 
-ASTBase * CExprStatement::clone () const
+CExprStatement * CExprStatement::clone () const
 {
     return new CExprStatement(*this);
 }
@@ -453,7 +426,7 @@ CCompoundStatement::~CCompoundStatement ()
     delete stmts;
 }
 
-ASTBase * CCompoundStatement::clone () const
+CCompoundStatement * CCompoundStatement::clone () const
 {
     return new CCompoundStatement(*this);
 }
@@ -491,7 +464,7 @@ CSelectionStatement::~CSelectionStatement ()
     delete s2;
 }
 
-ASTBase * CSelectionStatement::clone () const
+CSelectionStatement * CSelectionStatement::clone () const
 {
     return new CSelectionStatement(*this);
 }
@@ -536,7 +509,7 @@ CLabeledStatement::~CLabeledStatement ()
     delete ex;
 }
 
-ASTBase * CLabeledStatement::clone () const
+CLabeledStatement * CLabeledStatement::clone () const
 {
     return new CLabeledStatement(*this);
 }
@@ -565,7 +538,8 @@ CJumpStatement::CJumpStatement (Type t, const CExpr * e, const CStatement * n)
 }
 
 CJumpStatement::CJumpStatement (const CJumpStatement & x)
-    : CStatement(x), ex(x.expr() ? (CExpr *)x.expr()->clone() : NULL)
+  : CStatement(x), jstp(x.jstp), 
+    ex(x.expr() ? (CExpr *)x.expr()->clone() : NULL)
 {
 }
 
@@ -574,7 +548,7 @@ CJumpStatement::~CJumpStatement ()
     delete ex;
 }
 
-ASTBase * CJumpStatement::clone () const
+CJumpStatement * CJumpStatement::clone () const
 {
     return new CJumpStatement(*this);
 }
@@ -643,7 +617,7 @@ CIterationStatement::Type CIterationStatement::iterationstmt_type () const
     return istp;
 }
 
-ASTBase * CIterationStatement::clone () const
+CIterationStatement * CIterationStatement::clone () const
 {
     return new CIterationStatement(*this);
 }

@@ -91,21 +91,21 @@ public:
 class CFloatExpr : public CConstExpr {
 public:
     CFloatExpr (long double);
-    virtual ASTBase * clone () const;
+    virtual CFloatExpr * clone () const;
 };
 
 //
 class CIntExpr : public CConstExpr {
 public:
     CIntExpr (long long int);
-    virtual ASTBase * clone () const;
+    virtual CIntExpr * clone () const;
 };
 
 //
 class CUIntExpr : public CConstExpr {
 public:
     CUIntExpr (unsigned long long int);
-    virtual ASTBase * clone () const;
+    virtual CUIntExpr * clone () const;
 };
 
 //
@@ -117,7 +117,7 @@ public:
     CIdentExpr(const CIdent *);
     CIdentExpr(const CIdentExpr &);
     virtual ~CIdentExpr ();
-    virtual ASTBase * clone () const;
+    virtual CIdentExpr * clone () const;
     const CIdent * ident () const;
 };
 
@@ -150,7 +150,7 @@ public:
     const CExpr * leftArg () const;
     const CExpr * rightArg () const;
     Type binop_type () const;
-    virtual CExpr * clone () const;
+    virtual CBinOp * clone () const;
 };
 
 //
@@ -167,7 +167,7 @@ public:
     virtual ~CUnOp ();
     const CExpr * arg () const;
     Type unop_type () const;
-    virtual CExpr * clone () const;
+    virtual CUnOp * clone () const;
 };
 
 /*
@@ -175,15 +175,39 @@ public:
 */
 
 //
+template <typename _Elem>
 class ASTList {
 protected:
-    ASTBase * nxt;
+  _Elem * nxt;
 public:
-    ASTList (const ASTBase *);
-    ASTList (const ASTList &);
-    virtual ~ASTList ();
-    ASTBase * next () const;
-    ASTBase * setNext (const ASTBase *);
+  /*ASTList ()
+    : nxt(NULL)
+    { }*/
+  
+  explicit ASTList (const _Elem * n)
+    : nxt(const_cast<_Elem *>(n))
+  { }
+
+  ASTList (const ASTList & l)
+    : nxt(l.next() ? l.next()->clone() : NULL)
+  { }
+
+  virtual ~ASTList ()
+  {
+    delete nxt;
+  }
+
+  _Elem * next () const
+  {
+    return nxt;
+  }
+
+  _Elem * setNext (const _Elem * n)
+  {
+    _Elem * old = nxt;
+    nxt = const_cast<_Elem *>(n);
+    return old;
+  }
 };
 
 //
@@ -195,13 +219,13 @@ public:
     CIdent (const char *);
     virtual ~CIdent ();
     std::string name () const;
-    virtual ASTBase * clone () const;
+    virtual CIdent * clone () const;
 };
 
 //
 class CDeclSpec;
 class CInitDecl;
-class CDecl : public ASTBase, public ASTList {
+class CDecl : public ASTBase, public ASTList<CDecl> {
 protected:
     const CDeclSpec * const dsp;
     const CInitDecl * const id;
@@ -210,27 +234,27 @@ public:
 	   const CDecl *);
     CDecl (const CDecl &);
     virtual ~CDecl ();
-    virtual ASTBase * clone () const;
+    virtual CDecl * clone () const;
     const CDeclSpec * declspec () const;
     const CInitDecl * initdecl () const;
 };
 
 //
-class CDeclSpec : public ASTBase, public ASTList {
+class CDeclSpec : public ASTBase, public ASTList<CDeclSpec> {
 public:
     enum Type {TypeSpec, TypeQual, StorClassSpec};
 protected:
     const Type dstp;
 public:
     CDeclSpec (Type, const CDeclSpec *);
-    virtual ASTBase * clone () const;
+    virtual CDeclSpec * clone () const;
     Type declspec_type () const;
 };
 
 //
 class CDeclarator;
 class CInitializer;
-class CInitDecl : public ASTBase, public ASTList {
+class CInitDecl : public ASTBase, public ASTList<CInitDecl> {
 private:
     const CDeclarator * const dc;
     const CExpr * const in;
@@ -241,7 +265,7 @@ public:
     virtual ~CInitDecl ();
     const CDeclarator * declarator () const;
     const CExpr * initializer () const;
-    virtual ASTBase * clone () const;
+    virtual CInitDecl * clone () const;
 };
 
 //
@@ -254,7 +278,8 @@ protected:
 public:
     CTypeSpec (CTypeSpec::Type, const CDeclSpec *); 
     Type typespec_type () const;
-    virtual ASTBase * clone () const;
+    
+    virtual CTypeSpec * clone () const;
 };
 
 //
@@ -268,13 +293,13 @@ public:
     CDeclarator (Type, const CIdent *);
     CDeclarator (const CDeclarator &);
     virtual ~CDeclarator ();
-    virtual ASTBase * clone () const;
+    virtual CDeclarator * clone () const;
     Type declarator_type () const;
     const CIdent * ident () const;
 };
 
 //
-class CStatement : public ASTBase, public ASTList {
+class CStatement : public ASTBase, public ASTList<CStatement> {
 public:
     enum Type {Labeled, Compound, Expr, Selection, Iteration, Jump};
 protected:
@@ -282,7 +307,7 @@ protected:
 public:
     CStatement (Type, const CStatement *);
     Type stmt_type () const;
-    virtual ASTBase * clone () const;
+    virtual CStatement * clone () const;
 };
 
 //
@@ -294,7 +319,7 @@ public:
     CExprStatement (const CExprStatement &);
     virtual ~CExprStatement ();
     const CExpr * expr () const;
-    virtual ASTBase * clone () const;
+    virtual CExprStatement * clone () const;
 };
 
 //
@@ -306,7 +331,7 @@ public:
     CCompoundStatement (const CDecl *, const CStatement *, const CStatement *);
     CCompoundStatement (const CCompoundStatement &);
     virtual ~CCompoundStatement ();
-    virtual ASTBase * clone () const;
+    virtual CCompoundStatement * clone () const;
     const CDecl * declarations () const;
     const CStatement * statements () const;
 };
@@ -324,7 +349,7 @@ public:
 			 const CStatement *, const CStatement *);
     CSelectionStatement (const CSelectionStatement &);
     virtual ~CSelectionStatement ();
-    virtual ASTBase * clone () const;
+    virtual CSelectionStatement * clone () const;
     Type selectionstmt_type () const;
     const CExpr * expr () const;
     const CStatement * statement1 () const;
@@ -344,7 +369,7 @@ public:
 		       const CStatement *);
     CLabeledStatement (const CLabeledStatement &);
     virtual ~CLabeledStatement ();
-    virtual ASTBase * clone () const;
+    virtual CLabeledStatement * clone () const;
     Type labeledstmt_type () const;
     const CStatement * statement () const;
     const CConstExpr * expr () const;
@@ -361,7 +386,7 @@ public:
     CJumpStatement (Type, const CExpr *, const CStatement *);
     CJumpStatement (const CJumpStatement &);
     virtual ~CJumpStatement ();
-    virtual ASTBase * clone () const;
+    virtual CJumpStatement * clone () const;
     Type jumpstmt_type () const;
     const CExpr * expr () const;
 };
@@ -387,7 +412,7 @@ public:
 			 const CStatement *, const CStatement *);
     CIterationStatement (const CIterationStatement &);
     virtual ~CIterationStatement ();
-    virtual ASTBase * clone () const;
+    virtual CIterationStatement * clone () const;
     Type iterationstmt_type () const;
     const CExpr * cond () const;
     const CExpr * init () const;
