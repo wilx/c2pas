@@ -2,6 +2,7 @@
 #define _AST_HXX_
 
 #include <string>
+#include <cstdio>
 
 class ASTBase {
 public:
@@ -266,19 +267,81 @@ public:
 //
 class CDeclarator : public ASTBase {
 public:
-    enum Type {Pointer, DirectDec};
+    enum Type {Pointer, DirectDecl};
 protected:
     Type dct;
+    CIdent * id;
 public:
-    CDeclarator (Type);
+    CDeclarator (Type, CIdent *);
+    CDeclarator (const CDeclarator &);
+    virtual ~CDeclarator ();
     virtual ASTBase * clone () const;
     Type declarator_type () const;
+    CIdent * ident () const;
 };
 
+//
+class CCompoundStatement : public CStatement {
+protected:
+    CDecl * dcls;
+    CStatement * stmts;
+public:
+    CCompoundStatement (CDecl *, CStatement *, CStatement *);
+    CCompoundStatement (const CCompoundStatement &);
+    virtual ~CCompoundStatement ();
+    virtual ASTBase * clone () const;
+    CDecl * declarations () const;
+    CStatement * statements () const;
+};
 
 //
-/*class CCompoundStatement : public CStatement {
+class CSelectionStatement : public CStatement {
+public:
+    enum Type {If, Switch};
+private:
+    Type sstp;
+    CExpr * ex;
+    CStatement * s1, * s2;
+public:
+    CSelectionStatement (Type, CExpr *, CStatement *, CStatement *, CStatement *);
+    CSelectionStatement (const CSelectionStatement &);
+    virtual ~CSelectionStatement ();
+    virtual ASTBase * clone () const;
+    Type selectionstmt_type () const;
+    CExpr * expr () const;
+    CStatement * statement1 () const;
+    CStatement * statement2 () const;
+};
+
+//
+class CLabeledStatement : public CStatement {
+public:
+    enum Type {Label, Case, Default};
 protected:
-    
-};*/
+    Type lstp;
+    CStatement * st;
+public:
+    CLabeledStatement (Type, CStatement *, CStatement *);
+    CLabeledStatement (const CLabeledStatement &);
+    virtual ~CLabeledStatement ();
+    virtual ASTBase * clone () const;
+    Type labeledstmt_type () const;
+    CStatement * statement () const;
+};
+
+//
+class CJumpStatement : public CStatement {
+public:
+    enum Type {Goto, Continue, Break, Return};
+protected:
+    Type jstp;
+    CExpr * ex; // pro return
+public:
+    CJumpStatement (Type, CExpr *, CStatement *);
+    CJumpStatement (const CJumpStatement &);
+    virtual ~CJumpStatement ();
+    virtual ASTBase * clone () const;
+    Type jumpstmt_type () const;
+    CExpr * expr () const;
+};
 #endif // _AST_HXX_

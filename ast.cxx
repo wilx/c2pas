@@ -1,5 +1,4 @@
 #include "ast.hxx"
-#include <cstdio>
 
 /* ASTBase */
 
@@ -185,8 +184,6 @@ ASTBase * ASTList::setNext (ASTBase * n)
 CStatement::CStatement (CStatement::Type t, CStatement * n = NULL)
     : ASTBase(ASTBase::Statement), ASTList(n), stmtt(t)
 {
-    if (t == Labeled || t == Jump)
-        throw std::string("Unsupported statement.");
 }
 
 CStatement::Type CStatement::stmt_type () const
@@ -353,11 +350,22 @@ ASTBase * CInitDecl::clone () const
 }
 
 /* CDeclarator */
-CDeclarator::CDeclarator (CDeclarator::Type t)
-    : ASTBase(ASTBase::Declarator), dct(t)
+CDeclarator::CDeclarator (CDeclarator::Type t, CIdent * i)
+    : ASTBase(ASTBase::Declarator), dct(t), id(i)
 {
-    if (t != DirectDec)
+    if (t != DirectDecl)
         throw std::string("Pointer declarator not supported.");
+}
+
+CDeclarator::CDeclarator (const CDeclarator & x)
+    : ASTBase(x), dct(x.declarator_type())
+{
+    id = x.ident() ? (CIdent *)x.ident()->clone() : NULL;
+}
+
+CDeclarator::~CDeclarator ()
+{
+    delete id;
 }
 
 ASTBase * CDeclarator::clone () const
@@ -368,4 +376,154 @@ ASTBase * CDeclarator::clone () const
 CDeclarator::Type CDeclarator::declarator_type () const
 {
     return dct;
+}
+
+CIdent * CDeclarator::ident () const
+{
+    return id;
+}
+
+/* CCompoundStatement */
+CCompoundStatement::CCompoundStatement (CDecl * d, CStatement * s, CStatement * n)
+    : CStatement(CStatement::Compound, n), dcls(d), stmts(s)
+{
+}
+
+CCompoundStatement::CCompoundStatement (const CCompoundStatement & x)
+    : CStatement(x)
+{
+    dcls = x.declarations() ? (CDecl *)x.declarations()->clone() : NULL;
+    stmts = x.statements() ? (CStatement *)x.statements()->clone() : NULL;
+}
+
+CCompoundStatement::~CCompoundStatement ()
+{
+    delete dcls;
+    delete stmts;
+}
+
+ASTBase * CCompoundStatement::clone () const
+{
+    return new CCompoundStatement(*this);
+}
+
+CDecl * CCompoundStatement::declarations () const
+{
+    return dcls;
+}
+
+CStatement * CCompoundStatement::statements () const
+{
+    return stmts;
+}
+
+/* CSelectionStatement */
+CSelectionStatement::CSelectionStatement 
+    (Type t, CExpr * e, CStatement * a, CStatement * b, CStatement * n)
+    : CStatement(CStatement::Selection, n), sstp(t), ex(e), s1(a), s2(b)
+{
+}
+
+CSelectionStatement::CSelectionStatement (const CSelectionStatement & x)
+    : CStatement(x), sstp(x.selectionstmt_type())
+{
+    ex = x.expr() ? (CExpr *)x.expr()->clone() : NULL;
+    s1 = x.statement1() ? (CStatement *)x.statement1()->clone() : NULL;
+    s2 = x.statement2() ? (CStatement *)x.statement2()->clone() : NULL;
+}
+
+CSelectionStatement::~CSelectionStatement ()
+{
+    delete ex;
+    delete s1;
+    delete s2;
+}
+
+ASTBase * CSelectionStatement::clone () const
+{
+    return new CSelectionStatement(*this);
+}
+
+CSelectionStatement::Type CSelectionStatement::selectionstmt_type () const
+{
+    return sstp;
+}
+
+CExpr * CSelectionStatement::expr () const
+{
+    return ex;
+}
+
+CStatement * CSelectionStatement::statement1 () const
+{
+    return s1;
+}
+
+CStatement * CSelectionStatement::statement2 () const
+{
+    return s2;
+}
+
+/* CLabeledStatement */
+CLabeledStatement::CLabeledStatement (Type t, CStatement * s, CStatement * n)
+    : CStatement(CStatement::Labeled, n), lstp(t), st(s)
+{
+}
+
+CLabeledStatement::CLabeledStatement (const CLabeledStatement & x)
+    : CStatement(x), lstp(x.labeledstmt_type())
+{
+    st = x.statement() ? (CStatement *)x.statement()->clone() : NULL;
+}
+
+CLabeledStatement::~CLabeledStatement ()
+{
+    delete st;
+}
+
+ASTBase * CLabeledStatement::clone () const
+{
+    return new CLabeledStatement(*this);
+}
+
+CLabeledStatement::Type CLabeledStatement::labeledstmt_type () const
+{
+    return lstp;
+}
+
+CStatement * CLabeledStatement::statement () const
+{
+    return st;
+}
+
+/* CJumpStatement */
+CJumpStatement::CJumpStatement (Type t, CExpr * e, CStatement * n)
+    : CStatement(CStatement::Jump, n), jstp(t), ex(e)
+{
+}
+
+CJumpStatement::CJumpStatement (const CJumpStatement & x)
+    : CStatement(x)
+{
+    ex = x.expr() ? (CExpr *)x.expr()->clone() : NULL;
+}
+
+CJumpStatement::~CJumpStatement ()
+{
+    delete ex;
+}
+
+ASTBase * CJumpStatement::clone () const
+{
+    return new CJumpStatement(*this);
+}
+
+CJumpStatement::Type CJumpStatement::jumpstmt_type () const
+{
+    return jstp;
+}
+
+CExpr * CJumpStatement::expr () const
+{
+    return ex;
 }
