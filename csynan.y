@@ -380,10 +380,11 @@ assignment_expression
         
         | unary_expression assignment_operator assignment_expression
         {
-            if ($2.binopt != CBinOp::Assign)
-                throw ("Only simple assignment operator supported.");
-            else
-                $$.ast = new CBinOp(CBinOp::Assign, (CExpr *)$1.ast, (CExpr *)$3.ast);
+            /*if ($2.binopt != CBinOp::Assign)
+	      throw ("Only simple assignment operator supported.");
+	      else
+	      $$.ast = new CBinOp(CBinOp::Assign, (CExpr *)$1.ast, (CExpr *)$3.ast);*/
+	    $$.ast = new CBinOp($2.binopt, (CExpr *)$1.ast, (CExpr *)$3.ast);
         }
         ;
 

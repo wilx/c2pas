@@ -129,7 +129,7 @@ protected:
     Type t;
 public:
     COp (Type);
-    Type type () const;
+    Type op_type () const;
 };
 
 //

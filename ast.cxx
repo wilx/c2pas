@@ -116,7 +116,7 @@ COp::COp (Type tp)
 {
 }
 
-COp::Type COp::type () const
+COp::Type COp::op_type () const
 {
     return t;
 }
@@ -270,6 +270,10 @@ ASTBase * CTypeSpec::clone () const
 CDecl::CDecl (CDeclSpec * d, CInitDecl * i, CDecl * n)
     : ASTBase(ASTBase::Decl), ASTList(n), dsp(d), id(i)
 {
+    if (! d)
+	throw std::string("declspec musi byt != NULL");
+    /*if (! i)
+      throw std::string("initdecl musi byt != NULL");*/
 }
 
 CDecl::CDecl (const CDecl & x)

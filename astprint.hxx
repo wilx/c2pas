@@ -8,22 +8,31 @@
 #include <list>
 #include "ast.hxx"
 
+struct IdentInfo {
+    CTypeSpec * tspec;
+    std::string name;
+
+    IdentInfo (CTypeSpec *, const std::string &);
+};
+
 struct ASTInfo {
     /** Ukazatel na rodicovsky jmenny prostor */
     ASTInfo * parent;
     /** Hloubka vnoreni bloku */
     int block;
     /** Mapa prekladajici C identifikatory na Pascalske identifikatory */
-    std::map<std::string, std::string> idents;
-    
+    std::map<std::string, IdentInfo *> * idents;
+    /** Ukazatel na aktualni statement */
+    CStatement * astmt;
 
-    ASTInfo(ASTInfo *, int);
+    ASTInfo(ASTInfo *, int, CStatement *);
+    ASTInfo(CStatement *, const ASTInfo *);
 };
 
-extern std::map<std::string, ASTInfo *> pidents;
 extern std::list<CDecl *> decls;
-extern int blocks;
-extern std::ostream * outs;
+extern std::list<CBinOp *> initlist;
 
+extern void astprint (CCompoundStatement *, ASTInfo *, std::ostream &);
+extern void declsprint (std::list<CDecl *> &, std::ostream &);
 
 #endif // _ASTPRINT_HXX_
