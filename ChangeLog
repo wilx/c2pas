@@ -1,3 +1,8 @@
+2002-12-13 Vaclav Haisman <V.Haisman@sh.cvut.cz>
+	* lexan.cxx: Pridani rozpoznani dalsich escape kodu.
+	* ast.hxx: Novy soubor.
+	* ast.cxx: Novy soubor.
+	
 2002-12-09 Vaclav Haisman <V.Haisman@sh.cvut.cz>
 	* lexan.cxx: Upraveno poradi includes. Smazany nepotrebne promenne. 
 	Presunuti lexikalni anlyzy klicovych slov, identifikatoru a cisel do 

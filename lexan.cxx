@@ -26,7 +26,6 @@ Token lexan (void)
 	} while (isspace(ch));
       lexan_start: {
 	  /* prefix: "" */
-	  //ch = GETCHAR();
 	  switch (ch) {
 	  case '!': {
 	      goto stav_1;
@@ -178,16 +177,20 @@ Token lexan (void)
 	  case 'x':
 	  case 'X':
 	      goto lexan_retezec_esc_hex;
+	  case 'a': str << '\a';
+	  case 'b': str << '\b';
+	  case 'f': str << '\f';
 	  case 'n': str << '\n';
 	  case 'r': str << '\r';
 	  case 't': str << '\t';
-	  case 'a': str << '\a';
+	  case 'v': str << '\v';
 	  default: {
 	      if (ch >= '0' && ch <= '7') {
 		  UNGETCH();
 		  goto lexan_retezec_esc_oct;
 	      }
 	      str << ch;
+	      goto lexan_retezec;
 	  }
 	  }
       }
@@ -298,10 +301,13 @@ Token lexan (void)
       lexan_znak_esc: {
 	  ch = GETCHAR();
 	  switch (ch) {
+	  case 'a': lexan_val.chval = '\a'; break;
+	  case 'b': lexan_val.chval = '\b'; break;
+	  case 'f': lexan_val.chval = '\f'; break;
 	  case 'n': lexan_val.chval = '\n'; break;
 	  case 'r': lexan_val.chval = '\r'; break;
 	  case 't': lexan_val.chval = '\t'; break;
-	  case 'a': lexan_val.chval = '\a'; break;
+	  case 'v': lexan_val.chval = '\v'; break;
 	  default:
 	      lexan_val.chval = ch;
 	      goto lexan_znak_konec;
