@@ -135,7 +135,7 @@ Token lexan (void)
       stav_1: {
 	  /* prefix: "!" */
 	  /* konecny stav */
-	  token = TOK_NOT;
+	  token = '!';
 	  poslednikstav = 1;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -248,7 +248,7 @@ Token lexan (void)
       stav_3: {
 	  /* prefix: "%" */
 	  /* konecny stav */
-	  token = TOK_MOD;
+	  token = '%';
 	  poslednikstav = 3;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -265,7 +265,7 @@ Token lexan (void)
       stav_4: {
 	  /* prefix: "&" */
 	  /* konecny stav */
-	  token = TOK_BAND;
+	  token = '&';
 	  poslednikstav = 4;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -326,7 +326,7 @@ Token lexan (void)
       stav_6: {
 	  /* prefix: "(" */
 	  /* konecny stav */
-	  token = TOK_LRBRACKET;
+	  token = '(';
 	  poslednikstav = 6;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -340,7 +340,7 @@ Token lexan (void)
       stav_7: {
 	  /* prefix: ")" */
 	  /* konecny stav */
-	  token = TOK_RRBRACKET;
+	  token = ')';
 	  poslednikstav = 7;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -354,7 +354,7 @@ Token lexan (void)
       stav_8: {
 	  /* prefix: "*" */
 	  /* konecny stav */
-	  token = TOK_MULT;
+	  token = '*';
 	  poslednikstav = 8;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -371,7 +371,7 @@ Token lexan (void)
       stav_9: {
 	  /* prefix: "+" */
 	  /* konecny stav */
-	  token = TOK_PLUS;
+	  token = '+';
 	  poslednikstav = 9;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -391,7 +391,7 @@ Token lexan (void)
       stav_10: {
 	  /* prefix: "," */
 	  /* konecny stav */
-	  token = TOK_COMMA;
+	  token = ',';
 	  poslednikstav = 10;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -405,7 +405,7 @@ Token lexan (void)
       stav_11: {
 	  /* prefix: "-" */
 	  /* konecny stav */
-	  token = TOK_MINUS;
+	  token = '-';
 	  poslednikstav = 11;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -428,7 +428,7 @@ Token lexan (void)
       stav_12: {
 	  /* prefix: "." */
 	  /* konecny stav */
-	  token = TOK_DOT;
+	  token = '.';
 	  poslednikstav = 12;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -450,7 +450,7 @@ Token lexan (void)
       stav_13: {
 	  /* prefix: "/" */
 	  /* konecny stav */
-	  token = TOL_DIV;
+	  token = '/';
 	  poslednikstav = 13;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -503,7 +503,7 @@ Token lexan (void)
       stav_14: {
 	  /* prefix: ":" */
 	  /* konecny stav */
-	  token = TOK_COLON;
+	  token = ':';
 	  poslednikstav = 14;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -517,7 +517,7 @@ Token lexan (void)
       stav_15: {
 	  /* prefix: ";" */
 	  /* konecny stav */
-	  token = TOK_SEMICOLON;
+	  token = ';';
 	  poslednikstav = 15;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -531,7 +531,7 @@ Token lexan (void)
       stav_16: {
 	  /* prefix: "<" */
 	  /* konecny stav */
-	  token = TOK_LT;
+	  token = '<';
 	  poslednikstav = 16;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -551,7 +551,7 @@ Token lexan (void)
       stav_17: {
 	  /* prefix: "=" */
 	  /* konecny stav */
-	  token = TOK_EQSIGN;
+	  token = '=';
 	  poslednikstav = 17;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -568,7 +568,7 @@ Token lexan (void)
       stav_18: {
 	  /* prefix: ">" */
 	  /* konecny stav */
-	  token = TOK_GT;
+	  token = '>';
 	  poslednikstav = 18;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -588,7 +588,7 @@ Token lexan (void)
       stav_19: {
 	  /* prefix: "?" */
 	  /* konecny stav */
-	  token = TOK_QUESMARK;
+	  token = '?';
 	  poslednikstav = 19;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -602,7 +602,7 @@ Token lexan (void)
       stav_20: {
 	  /* prefix: "[" */
 	  /* konecny stav */
-	  token = TOK_LSBRACKET;
+	  token = '[';
 	  poslednikstav = 20;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -616,7 +616,7 @@ Token lexan (void)
       stav_21: {
 	  /* prefix: "]" */
 	  /* konecny stav */
-	  token = TOK_RSBRACKET;
+	  token = ']';
 	  poslednikstav = 21;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -630,7 +630,7 @@ Token lexan (void)
       stav_22: {
 	  /* prefix: "^" */
 	  /* konecny stav */
-	  token = TOK_XOR;
+	  token = '^';
 	  poslednikstav = 22;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -647,7 +647,7 @@ Token lexan (void)
       stav_23: {
 	  /* prefix: "{" */
 	  /* konecny stav */
-	  token = TOK_LBRACE;
+	  token = '{';
 	  poslednikstav = 23;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -661,7 +661,7 @@ Token lexan (void)
       stav_24: {
 	  /* prefix: "|" */
 	  /* konecny stav */
-	  token = TOK_BOR;
+	  token = '|';
 	  poslednikstav = 24;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -681,7 +681,7 @@ Token lexan (void)
       stav_25: {
 	  /* prefix: "}" */
 	  /* konecny stav */
-	  token = TOK_RBRACE;
+	  token = '}';
 	  poslednikstav = 25;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -695,7 +695,7 @@ Token lexan (void)
       stav_26: {
 	  /* prefix: "~" */
 	  /* konecny stav */
-	  token = TOK_TILDE;
+	  token = '~';
 	  poslednikstav = 26;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -994,7 +994,7 @@ Token lexan (void)
       stav_47: {
 	  /* prefix: "..." */
 	  /* konecny stav */
-	  token = TOK_ELIPSE;
+	  token = TOK_ELLIPSIS;
 	  poslednikstav = 47;
 	  ch = GETCHAR();
 	  switch (ch) {
@@ -1145,4 +1145,16 @@ void lexan_init(std::istream & input)
     kslova.insert(std::make_pair(std::string("typedef"), TOK_TYPEDEF));
     kslova.insert(std::make_pair(std::string("enum"), TOK_ENUM));
     kslova.insert(std::make_pair(std::string("union"), TOK_UNION));
+    kslova.insert(std::make_pair(std::string("volatile"), TOK_VOLATILE));
+    kslova.insert(std::make_pair(std::string("sizeof"), TOK_SIZEOF));
+    kslova.insert(std::make_pair(std::string("extern"), TOK_EXTERN));
+    kslova.insert(std::make_pair(std::string("static"), TOK_STATIC));
+    kslova.insert(std::make_pair(std::string("auto"), TOK_AUTO));
+    kslova.insert(std::make_pair(std::string("register"), TOK_REGISTER));
+    kslova.insert(std::make_pair(std::string("switch"), TOK_SWITCH));
+    kslova.insert(std::make_pair(std::string("case"), TOK_CASE));
+    kslova.insert(std::make_pair(std::string("default"), TOK_DEFAULT));
+    kslova.insert(std::make_pair(std::string("continue"), TOK_CONTINUE));
+    kslova.insert(std::make_pair(std::string("break"), TOK_BREAK));
+    kslova.insert(std::make_pair(std::string("return"), TOK_RETURN));
 }
