@@ -88,22 +88,23 @@ public:
 
 //
 class CFloatExpr : public CConstExpr {
-    long double val;
 public:
     CFloatExpr (long double);
+    virtual ASTBase * clone () const;
 };
 
 //
 class CIntExpr : public CConstExpr {
 public:
     CIntExpr (long long int);
+    virtual ASTBase * clone () const;
 };
 
 //
 class CUIntExpr : public CConstExpr {
-    unsigned long long int val;
 public:
     CUIntExpr (unsigned long long int);
+    virtual ASTBase * clone () const;
 };
 
 //
@@ -123,7 +124,9 @@ public:
 class CBinOp : public COp {
 public:
     enum Type {Plus, Minus, Mult, Div, Mod, LShift, RShift, BAnd, BOr, LAnd, LOr, 
-               Eq, NEq, LEq, GEq, Le, Gt, Xor};
+               Eq, NEq, LEq, GEq, Lt, Gt, Xor, 
+               Assign, MultAss, DivAss, ModAss, PlusAss, MinusAss, LShiftAss,
+               RShiftAss, BAndAss, BOrAss, XorAss};
 protected:
     CExpr * left, * right;
     Type binopt;

@@ -7,9 +7,12 @@ char* filename = "";
 extern int yylex (void);
 void yyerror (char *s);
 
+#include "ast.hxx"
+
 union yystype {
-    int x;
-    char * str;
+    CUnOp::Type unopt;
+    CBinOp::Type binopt;
+    ASTBase * ast;
 };
 #define YYSTYPE yystype
 
@@ -34,146 +37,437 @@ union yystype {
 
 primary_expression
         : TOK_IDENT
+        {
+            $$.ast = new CIdent(lexan_val.str);
+        }
+        
         | constant
+        {
+            $$.ast == $1.ast;
+        }
+        
         | TOK_STRING
+        {
+            throw std::string("String literal not supported.");
+        }
+        
         | '(' expression ')'
+        {
+            $$.ast = $2.ast;
+        }
         ;
 
 constant
         : TOK_FPNUM
+        {
+            $$.ast = new CFloatExpr(lexan_val.fpval);
+        }
+        
         | TOK_INTNUM
+        {
+            $$.ast = new CIntExpr(lexan_val.intval);
+        }
+        
         | TOK_UINTNUM
+        {
+            $$.ast = new CUIntExpr(lexan_val.uintval);
+        }
+        
         | TOK_CHARVAL
+        {
+            throw std::string("Character constant not supported.");
+        }
         ;
         
 postfix_expression
         : primary_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | postfix_expression '[' expression ']'
+        {
+            throw std::string("Arrays not supported.");
+        }
+        
         | postfix_expression '(' ')'
+        {
+            throw std::string("Functions not supported.");
+        }
+        
         | postfix_expression '(' argument_expression_list ')'
+        {
+            throw std::string("Functions not supported.");
+        }
+        
         | postfix_expression '.' TOK_IDENT
+        {
+            throw std::string("Structured types not supported.");
+        }
+        
         | postfix_expression TOK_ARROW TOK_IDENT
+        {
+            throw std::string("Structured types not supported.");
+        }
+        
         | postfix_expression TOK_PLUSPLUS
+        {
+            $$.ast = new CUnOp(CUnOp::PostInc, (CExpr *)$1.ast);
+        }
+        
         | postfix_expression TOK_MINMIN
+        {
+            $$.ast = new CUnOp(CUnOp::PostDec, (CExpr *)$1.ast);
+        }
         ;
 
 argument_expression_list
         : assignment_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | argument_expression_list ',' assignment_expression
+        {
+            throw std::string("Argument lists not supported.");
+        }
         ;
 
 unary_expression
-        : postfix_expression
+        : postfix_expression 
+        {
+            $$.ast = $1.ast;
+        }
+        
         | TOK_PLUSPLUS unary_expression
+        {
+            $$.ast = new CUnOp(CUnOp::PreInc, (CExpr *)$2.ast);
+        }
+        
         | TOK_MINMIN unary_expression
+        {
+            $$.ast = new CUnOp(CUnOp::PreDec, (CExpr *)$2.ast);
+        }
+        
         | unary_operator cast_expression
+        {
+            $$.ast = new CUnOp($1.unopt, (CExpr *)$2.ast);
+        }
+        
         | TOK_SIZEOF unary_expression
+        {
+            throw std::string("sizeof not supported.");
+        }
+        
         | TOK_SIZEOF '(' type_name ')'
+        {
+            throw std::string("sizeof not supported.");
+        }
         ;
 
 unary_operator
         : '&'
+        {
+            $$.unopt = CUnOp::And;
+        }
+        
         | '*'
+        {
+            $$.unopt = CUnOp::Star;
+        }
+        
         | '+'
+        {
+            $$.unopt = CUnOp::Plus;
+        }
+        
         | '-'
+        {
+            $$.unopt = CUnOp::Minus;
+        }
+        
         | '~'
+        {
+            $$.unopt = CUnOp::Tilde;
+        }
+        
         | '!'
+        {
+            $$.unopt = CUnOp::Excl;
+        }
         ;
 
 cast_expression
         : unary_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | '(' type_name ')' cast_expression
+        /* !!! Doplnit !!! */
         ;
 
 multiplicative_expression
-        : cast_expression
+        : cast_expression 
+        {
+            $$.ast = $1.ast;
+        }
+        
         | multiplicative_expression '*' cast_expression
+        {
+            $$.ast = new CBinOp(CBinOp::Mult, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
+        
         | multiplicative_expression '/' cast_expression
+        {
+            $$.ast = new CBinOp(CBinOp::Div, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
+        
         | multiplicative_expression '%' cast_expression
+        {
+            $$.ast = new CBinOp(CBinOp::Mod, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 additive_expression
         : multiplicative_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | additive_expression '+' multiplicative_expression
+        {
+            $$.ast = new CBinOp(CBinOp::Plus, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
+        
         | additive_expression '-' multiplicative_expression
+        {
+            $$.ast = new CBinOp(CBinOp::Minus, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 shift_expression
         : additive_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | shift_expression TOK_LSHIFT additive_expression
+        {
+            $$.ast = new CBinOp(CBinOp::LShift, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
+        
         | shift_expression TOK_RSHIFT additive_expression
+        {
+            $$.ast = new CBinOp(CBinOp::RShift, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 relational_expression
         : shift_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | relational_expression '<' shift_expression
+        {
+            $$.ast = new CBinOp(CBinOp::Lt, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
+        
         | relational_expression '>' shift_expression
+        {
+            $$.ast = new CBinOp(CBinOp::Gt, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
+        
         | relational_expression TOK_LE shift_expression
+        {
+            $$.ast = new CBinOp(CBinOp::LEq, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
+        
         | relational_expression TOK_GE shift_expression
+        {
+            $$.ast = new CBinOp(CBinOp::GEq, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 equality_expression
         : relational_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | equality_expression TOK_EQ relational_expression
+        {
+            $$.ast = new CBinOp(CBinOp::Eq, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
+        
         | equality_expression TOK_NE relational_expression
+        {
+            $$.ast = new CBinOp(CBinOp::NEq, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 and_expression
         : equality_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | and_expression '&' equality_expression
+        {
+            $$.ast = new CBinOp(CBinOp::BAnd, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 exclusive_or_expression
         : and_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | exclusive_or_expression '^' and_expression
+        {
+            $$.ast = new CBinOp(CBinOp::Xor, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 inclusive_or_expression
         : exclusive_or_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | inclusive_or_expression '|' exclusive_or_expression
+        {
+            $$.ast = new CBinOp(CBinOp::BOr, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 logical_and_expression
         : inclusive_or_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | logical_and_expression TOK_LAND inclusive_or_expression
+        {
+            $$.ast = new CBinOp(CBinOp::LAnd, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 logical_or_expression
         : logical_and_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | logical_or_expression TOK_LOR logical_and_expression
+        {
+            $$.ast = new CBinOp(CBinOp::LOr, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 conditional_expression
         : logical_or_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | logical_or_expression '?' expression ':' conditional_expression
+        {
+            throw std::string("Ternary operator not supported.");
+        }
         ;
 
 assignment_expression
         : conditional_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | unary_expression assignment_operator assignment_expression
+        {
+            if ($2.binopt != CBinOp::Assign)
+                throw ("Only simple assignment operator supported.");
+            else
+                $$.ast = new CBinOp(CBinOp::Assign, (CExpr *)$1.ast, (CExpr *)$3.ast);
+        }
         ;
 
 assignment_operator
         : '='
+        {
+            $$.binopt = CBinOp::Assign;
+        }
+        
         | TOK_MULTEQ
+        {
+            $$.binopt = CBinOp::MultAss;
+        }
+        
         | TOK_DIVEQ
+        {
+            $$.binopt = CBinOp::DivAss;
+        }
+        
         | TOK_MODEQ
+        {
+            $$.binopt = CBinOp::ModAss;
+        }
+        
         | TOK_PLUSEQ
+        {
+            $$.binopt = CBinOp::PlusAss;
+        }
+        
         | TOK_MINUSEQ
+        {
+            $$.binopt = CBinOp::MinusAss;
+        }
+        
         | TOK_LSHIFTEQ
+        {
+            $$.binopt = CBinOp::LShiftAss;
+        }
+        
         | TOK_RSHIFTEQ
+        {
+            $$.binopt = CBinOp::RShiftAss;
+        }
+        
         | TOK_ANDEQ
+        {
+            $$.binopt = CBinOp::BAndAss;
+        }
+        
         | TOK_XOREQ
+        {
+            $$.binopt = CBinOp::XorAss;
+        }
+        
         | TOK_OREQ
+        {
+            $$.binopt = CBinOp::BOrAss;
+        }
         ;
 
 expression
         : assignment_expression
+        {
+            $$.ast = $1.ast;
+        }
+        
         | expression ',' assignment_expression
+        {
+            throw std::string("Operator comma not supported.");
+        }
         ;
 
 constant_expression
         : conditional_expression
+        {
+            $$.ast = $1.ast;
+        }
         ;
 
 declaration
@@ -289,7 +583,7 @@ declarator
 
 direct_declarator
         : TOK_IDENT
-        | '(' declarator ')'
+        | '(' declarator ')' /* pouze jednoduche deklarace */
         | direct_declarator '[' constant_expression ']'
         | direct_declarator '[' ']'
         | direct_declarator '(' parameter_type_list ')'

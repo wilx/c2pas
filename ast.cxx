@@ -50,16 +50,31 @@ CFloatExpr::CFloatExpr (long double v)
 {
 }
 
+ASTBase * CFloatExpr::clone () const
+{
+    return new CFloatExpr(*this);
+}
+
 /* CIntExpr */
 CIntExpr::CIntExpr (long long int v)
     : CConstExpr(Int, v)
 {
 }
 
+ASTBase * CIntExpr::clone () const
+{
+    return new CIntExpr(*this);
+}
+
 /* CUIntExpr */
 CUIntExpr::CUIntExpr (unsigned long long int v)
     : CConstExpr(UInt, v)
 {
+}
+
+ASTBase * CUIntExpr::clone () const
+{
+    return new CUIntExpr(*this);
 }
 
 /* COp */
@@ -500,6 +515,8 @@ CStatement * CLabeledStatement::statement () const
 CJumpStatement::CJumpStatement (Type t, CExpr * e, CStatement * n)
     : CStatement(CStatement::Jump, n), jstp(t), ex(e)
 {
+    if (t == Goto)
+        throw std::string("Goto jump statement not supported.");
 }
 
 CJumpStatement::CJumpStatement (const CJumpStatement & x)
