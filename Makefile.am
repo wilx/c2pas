@@ -1,4 +1,4 @@
-CXXFLAGS = @CXXFLAGS@ -W -Wall -fverbose-asm -save-temps
+AM_CXXFLAGS = @CXXFLAGS@ -W -Wall -fverbose-asm -save-temps
 bin_PROGRAMS = c2pas
 c2pas_SOURCES = c2pas.cxx lexan.cxx lexan.hxx csynan.cxx csynan.hxx ast.hxx ast.cxx
 c2pas_SOURCES += defines.hxx astprint.hxx astprint.cxx

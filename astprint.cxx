@@ -20,14 +20,15 @@ IdentInfo::IdentInfo (CTypeSpec * td, const std::string & n)
 {
 }
 
-ASTInfo::ASTInfo(ASTInfo * p, int b, CStatement * s)
-    : parent(p), block(b), astmt(s)
+ASTInfo::ASTInfo(const ASTInfo * p, int b, const CStatement * s)
+    : parent((ASTInfo *)p), block(b), astmt((CStatement *)s)
 {
     idents = new std::map<std::string, IdentInfo *>();
 }
 
-ASTInfo::ASTInfo(CStatement * s, const ASTInfo * ai)
-    : parent(ai->parent), block(ai->block), idents(ai->idents), astmt(s)
+ASTInfo::ASTInfo(const CStatement * s, const ASTInfo * ai)
+    : parent((ASTInfo *)ai->parent), block(ai->block), 
+      idents(ai->idents), astmt((CStatement *)s)
 {
 }
 
@@ -172,7 +173,7 @@ inline CDecl * gentmpdecl (CTypeSpec * ts)
 
 inline void recordidents (CDecl * dcl, ASTInfo * ai)
 {
-    CInitDecl * idcl = dcl->initdecl();
+    CInitDecl * idcl = (CInitDecl *)dcl->initdecl();
     while (idcl != NULL) {
 	/* vloz identifikator do prekladove tabulky identifikatoru */
 	std::pair<std::string, ASTInfo *> p;
@@ -197,14 +198,14 @@ inline void recordidents (CDecl * dcl, ASTInfo * ai)
     }
 }
 
-inline CTypeSpec::Type getexprtype (CExpr *, ASTInfo *);
-inline CTypeSpec::Type getexprtype (COp * o, ASTInfo * ai)
+inline CTypeSpec::Type getexprtype (const CExpr *, const ASTInfo *);
+inline CTypeSpec::Type getexprtype (const COp * o, const ASTInfo * ai)
 {
     switch (o->op_type()) {
     case COp::Unary:
-	return getexprtype(((CUnOp *)o)->arg(), ai);
+	return getexprtype(((const CUnOp *)o)->arg(), ai);
     case COp::Binary: {
-	CBinOp * bo = (CBinOp *)o;
+	const CBinOp * bo = (const CBinOp *)o;
 	CTypeSpec::Type lt, rt;
 	lt = getexprtype(bo->leftArg(), ai);
 	rt = getexprtype(bo->rightArg(), ai);
@@ -224,11 +225,11 @@ inline CTypeSpec::Type getexprtype (COp * o, ASTInfo * ai)
     }
 }
 
-inline CTypeSpec::Type getexprtype (CExpr * e, ASTInfo * ai)
+inline CTypeSpec::Type getexprtype (const CExpr * e, const ASTInfo * ai)
 {
     switch (e->expr_type()) {
     case CExpr::Ident: {
-	std::string id = ((CIdentExpr *)e)->ident()->name();
+	std::string id = ((const CIdentExpr *)e)->ident()->name();
 	std::pair<std::string, ASTInfo *> ainfo 
 	    = findident(id, ai);
 	if (! ainfo.second)
@@ -236,9 +237,9 @@ inline CTypeSpec::Type getexprtype (CExpr * e, ASTInfo * ai)
 	return ainfo.second->idents->operator[](id)->tspec->typespec_type();
     }
     case CExpr::Op:
-	return getexprtype((COp *)e, ai);
+	return getexprtype((const COp *)e, ai);
     case CExpr::Const: {
-	switch (((CConstExpr *)e)->const_type()) {
+	switch (((const CConstExpr *)e)->const_type()) {
 	case CConstExpr::Int:
 	    return CTypeSpec::Int;
 	case CConstExpr::UInt:
@@ -253,21 +254,21 @@ inline CTypeSpec::Type getexprtype (CExpr * e, ASTInfo * ai)
     throw std::string("Pro uspokojeni warningu od kompilatoru");
 }
 
-void astprint (CCompoundStatement * cs, ASTInfo * ai, 
+void astprint (const CCompoundStatement * cs, ASTInfo * ai, 
 	       std::ostream & out);
-void astprint (CSelectionStatement * cs, ASTInfo * ai, 
+void astprint (const CSelectionStatement * cs, ASTInfo * ai, 
 	       std::ostream & out);
-void astprint (CExprStatement *, ASTInfo *, std::ostream &);
-void astprint (CIterationStatement *, ASTInfo *, std::ostream &);
-void astprint (CJumpStatement *, ASTInfo *, std::ostream &);
-void astprint (CExpr *, ASTInfo *, std::ostream &);
-void astprint (COp *, ASTInfo *, std::ostream &);
-void astprint (CConstExpr *, ASTInfo *, std::ostream &);
-void astprint (CUnOp *, ASTInfo *, std::ostream &);
-void astprint (CBinOp *, ASTInfo *, std::ostream &);
+void astprint (const CExprStatement *, ASTInfo *, std::ostream &);
+void astprint (const CIterationStatement *, ASTInfo *, std::ostream &);
+void astprint (const CJumpStatement *, ASTInfo *, std::ostream &);
+void astprint (const CExpr *, ASTInfo *, std::ostream &);
+void astprint (const COp *, ASTInfo *, std::ostream &);
+void astprint (const CConstExpr *, ASTInfo *, std::ostream &);
+void astprint (const CUnOp *, ASTInfo *, std::ostream &);
+void astprint (const CBinOp *, ASTInfo *, std::ostream &);
 
 
-void astprint (CStatement * s, ASTInfo * ai,
+void astprint (const CStatement * s, ASTInfo * ai,
 	       std::ostream & out)
 {
     if (! s)
@@ -278,25 +279,26 @@ void astprint (CStatement * s, ASTInfo * ai,
 	throw std::string("'Labeled' statement handled within 'Selection' "
 			  "statement only");
     case CStatement::Compound:
-	astprint((CCompoundStatement *)s, new ASTInfo(ai, ++blocks, s), out);
+	astprint((const CCompoundStatement *)s, new ASTInfo(ai, ++blocks, s), 
+		 out);
 	break;
     case CStatement::Expr:
-	astprint((CExprStatement *)s, new ASTInfo(s, ai), out);
+	astprint((const CExprStatement *)s, new ASTInfo(s, ai), out);
 	break;
     case CStatement::Iteration:
-	astprint((CIterationStatement *)s, new ASTInfo(s, ai), out);
+	astprint((const CIterationStatement *)s, new ASTInfo(s, ai), out);
 	break;
     case CStatement::Jump:
-	astprint((CJumpStatement *)s, new ASTInfo(s, ai), out);
+	astprint((const CJumpStatement *)s, new ASTInfo(s, ai), out);
 	break;
     case CStatement::Selection:
-	astprint((CSelectionStatement *)s, new ASTInfo(s, ai), out);
+	astprint((const CSelectionStatement *)s, new ASTInfo(s, ai), out);
     }
     /* pokracuj na dalsi CStatement v seznamu */
-    astprint((CStatement *)s->next(), ai, out);
+    astprint((const CStatement *)s->next(), ai, out);
 }
 
-void astprint (CExprStatement * es, ASTInfo * ai, std::ostream & out)
+void astprint (const CExprStatement * es, ASTInfo * ai, std::ostream & out)
 {
     out << ";" << std::endl;
     if (! es)
@@ -304,7 +306,8 @@ void astprint (CExprStatement * es, ASTInfo * ai, std::ostream & out)
     astprint(es->expr(), ai, out);
 }
 
-void astprint (CIterationStatement * is, ASTInfo * ai, std::ostream & out)
+void astprint (const CIterationStatement * is, ASTInfo * ai, 
+	       std::ostream & out)
 {
     out << ";" << std::endl;
     if (! is)
@@ -319,7 +322,7 @@ void astprint (CIterationStatement * is, ASTInfo * ai, std::ostream & out)
     out << ";" << std::endl << "end";
 }
 
-void astprint (CJumpStatement * js, ASTInfo *, std::ostream & out)
+void astprint (const CJumpStatement * js, ASTInfo *, std::ostream & out)
 {
     out << ";" << std::endl;
     if (! js)
@@ -339,7 +342,7 @@ void astprint (CJumpStatement * js, ASTInfo *, std::ostream & out)
     }
 }
 
-void astprint (CCompoundStatement * cs, ASTInfo * ai, 
+void astprint (const CCompoundStatement * cs, ASTInfo * ai, 
 	       std::ostream & out)
 {
     out << ";" << std::endl;
@@ -350,7 +353,7 @@ void astprint (CCompoundStatement * cs, ASTInfo * ai,
     blockstack.push_back(ai->block); 
 
     /* projdi deklarace a uloz je pro pozdejsi pouziti */
-    CDecl * dcl = cs->declarations();
+    CDecl * dcl = (CDecl *)cs->declarations();
     while (dcl != NULL) {
 	recordidents(dcl, ai);
 	dcl = (CDecl *)dcl->next();
@@ -358,7 +361,7 @@ void astprint (CCompoundStatement * cs, ASTInfo * ai,
     
     /* vystup bloku */
     out << "begin" << std::endl;
-    CStatement * stmt = cs->statements();
+    CStatement * stmt = (CStatement *)cs->statements();
     astprint(stmt, ai, out);
     /*while (stmt != NULL) {
 	out << ";" << std::endl;
@@ -372,7 +375,7 @@ void astprint (CCompoundStatement * cs, ASTInfo * ai,
 	blockstack.erase(--blockstack.end()); 
 }
 
-void astprint (CSelectionStatement * ss, ASTInfo * ai, 
+void astprint (const CSelectionStatement * ss, ASTInfo * ai, 
 	       std::ostream & out)
 {
     out << ";" << std::endl;
@@ -387,7 +390,8 @@ void astprint (CSelectionStatement * ss, ASTInfo * ai,
 	   vicekrat */
 	CDecl * tmpdecl = gentmpdecl(new CTypeSpec(CTypeSpec::Long, NULL));
 	decls.push_back(tmpdecl);
-	CIdent * tmpident = tmpdecl->initdecl()->declarator()->ident();
+	CIdent * tmpident = 
+	  (CIdent *)tmpdecl->initdecl()->declarator()->ident();
 	CIdentExpr * idexpr = new CIdentExpr(new CIdent(*tmpident));
 	CBinOp * tmpass = new CBinOp(CBinOp::Assign, idexpr, ss->expr());
 	CExprStatement * estmt = new CExprStatement(new CBinOp(*tmpass), NULL);
@@ -399,10 +403,10 @@ void astprint (CSelectionStatement * ss, ASTInfo * ai,
     }
     
     if (ss->statement1()->stmt_type() != CStatement::Compound)
-	throw std::string("Olny 'Compound' statement can follow 'switch'");
+	throw std::string("Only 'Compound' statement can follow 'switch'");
     CCompoundStatement * swstmt = (CCompoundStatement *)ss->statement1();
     CLabeledStatement * lstmt;
-    CStatement * stmt = swstmt->statements();;
+    const CStatement * stmt = swstmt->statements();;
     while (stmt != NULL) {
 	switch (stmt->stmt_type()) {
 	case CStatement::Labeled:
@@ -435,13 +439,13 @@ void astprint (CSelectionStatement * ss, ASTInfo * ai,
     }
 }
 
-inline bool iskindofassign (CExpr * o)
+inline bool iskindofassign (const CExpr * o)
 {
     if (o->expr_type() != CExpr::Op)
 	return false;
-    if (((COp *)o)->op_type() != COp::Binary)
+    if (((const COp *)o)->op_type() != COp::Binary)
 	return false;
-    switch (((CBinOp *)o)->binop_type()) {
+    switch (((const CBinOp *)o)->binop_type()) {
     case CBinOp::Assign:
     case CBinOp::MultAss:
     case CBinOp::DivAss:
@@ -459,11 +463,11 @@ inline bool iskindofassign (CExpr * o)
     }
 }
 
-void astprint (CExpr * e, ASTInfo * ai, std::ostream & out)
+void astprint (const CExpr * e, ASTInfo * ai, std::ostream & out)
 {
     switch (e->expr_type()) {
     case CExpr::Ident: {
-	std::string id = ((CIdentExpr *)e)->ident()->name(); 
+	std::string id = ((const CIdentExpr *)e)->ident()->name(); 
 	std::pair<std::string, ASTInfo *> ainf = findident(id, ai);
 	if (! ainf.second) {
 	    throw std::string("Identifier '") 
@@ -478,34 +482,34 @@ void astprint (CExpr * e, ASTInfo * ai, std::ostream & out)
 	    astprint((CBinOp *)e, ai, out);
 	    }*/
 	if (iskindofassign(e))
-	    astprint((CBinOp *)e, ai, out);
+	    astprint((const CBinOp *)e, ai, out);
 	else {
 	    out << "(";
-	    astprint((COp *)e, ai, out);
+	    astprint((const COp *)e, ai, out);
 	    out << ")";
 	}
 	break;
     case CExpr::Const:
-	astprint((CConstExpr *)e, ai, out);
+	astprint((const CConstExpr *)e, ai, out);
 	break;
     }
 }
 
-void astprint (COp * o, ASTInfo * ai, std::ostream & out)
+void astprint (const COp * o, ASTInfo * ai, std::ostream & out)
 {
     switch (o->op_type()) {
     case COp::Unary:
-	astprint((CUnOp *)o, ai, out);
+	astprint((const CUnOp *)o, ai, out);
 	break;
     case COp::Binary:
-	astprint((CBinOp *)o, ai, out);
+	astprint((const CBinOp *)o, ai, out);
 	break;
     case COp::Ternary:
 	throw std::string("'Ternary' operation not supported");
     }
 }
 
-void astprint (CConstExpr * x, ASTInfo *, std::ostream & out)
+void astprint (const CConstExpr * x, ASTInfo *, std::ostream & out)
 {
     switch (x->const_type()) {
     case CConstExpr::Float:
@@ -523,7 +527,7 @@ void astprint (CConstExpr * x, ASTInfo *, std::ostream & out)
     }
 }
 
-void astprint (CUnOp * o, ASTInfo * ai, std::ostream & out)
+void astprint (const CUnOp * o, ASTInfo * ai, std::ostream & out)
 {
     switch (o->unop_type()) {
     case CUnOp::Tilde:
@@ -564,13 +568,13 @@ void astprint (CUnOp * o, ASTInfo * ai, std::ostream & out)
 	   a tak castecne simuluje postinkrement. */
  	CBinOp * tmpass 
 	    = new CBinOp(CBinOp::Assign, 
-			 new CIdentExpr(*static_cast<CIdentExpr *>(o->arg())),
+			 new CIdentExpr(*(const CIdentExpr *)o->arg()),
 			 new CBinOp(CBinOp::Plus,
 				    new CIdentExpr(
-					*static_cast<CIdentExpr *>(o->arg())),
+					*(const CIdentExpr *)o->arg()),
 				    new CUIntExpr(1)));
 	CExprStatement * estmt = new CExprStatement(new CBinOp(*tmpass), NULL);
-	CStatement * old = (CStatement *)ai->astmt->next();
+	const CStatement * old = (const CStatement *)ai->astmt->next();
 	ai->astmt->setNext(estmt);
 	estmt->setNext(old);
 	astprint(o->arg(), ai, out);
@@ -584,10 +588,10 @@ void astprint (CUnOp * o, ASTInfo * ai, std::ostream & out)
 	   a tak castecne simuluje postdekrement. */
  	CBinOp * tmpass 
 	    = new CBinOp(CBinOp::Assign, 
-			 new CIdentExpr(*static_cast<CIdentExpr *>(o->arg())),
+			 new CIdentExpr(*(const CIdentExpr *)o->arg()),
 			 new CBinOp(CBinOp::Minus,
 				    new CIdentExpr(
-					*static_cast<CIdentExpr *>(o->arg())),
+				        *(const CIdentExpr *)o->arg()),
 				    new CUIntExpr(1)));
 	CExprStatement * estmt = new CExprStatement(new CBinOp(*tmpass), NULL);
 	CStatement * old = (CStatement *)ai->astmt->next();
@@ -605,7 +609,7 @@ void astprint (CUnOp * o, ASTInfo * ai, std::ostream & out)
 
 }
 
-inline CBinOp::Type getassignoptype (CBinOp * o)
+inline CBinOp::Type getassignoptype (const CBinOp * o)
 {
     switch (o->binop_type()) {
     case CBinOp::MultAss:
@@ -634,7 +638,7 @@ inline CBinOp::Type getassignoptype (CBinOp * o)
 }
 
 
-void astprint (CBinOp * o, ASTInfo * ai, std::ostream & out)
+void astprint (const CBinOp * o, ASTInfo * ai, std::ostream & out)
 {
     switch (o->binop_type()) {
     case CBinOp::Plus:
@@ -789,12 +793,12 @@ void astprint (CBinOp * o, ASTInfo * ai, std::ostream & out)
     case CBinOp::BAndAss:
     case CBinOp::BOrAss:
     case CBinOp::XorAss: {
-	CBinOp * tmpex;
-	tmpex = new CBinOp(CBinOp::Assign,
-			   (CExpr *)o->leftArg()->clone(),
-			   new CBinOp(getassignoptype(o), 
-				      (CExpr *)o->leftArg()->clone(),
-				      (CExpr *)o->rightArg()->clone()));
+	const CBinOp * tmpex = 
+	  new CBinOp(CBinOp::Assign,
+		     (const CExpr *)o->leftArg()->clone(),
+		     new CBinOp(getassignoptype(o), 
+				(const CExpr *)o->leftArg()->clone(),
+				(const CExpr *)o->rightArg()->clone()));
 	astprint(tmpex, ai, out);
     }
 	
@@ -806,9 +810,9 @@ void declsprint (std::list<CDecl *> & dcls, std::ostream & out)
     for (std::list<CDecl *>::iterator idecl = dcls.begin();
 	 idecl != dcls.end();
 	 ++idecl) {
-	CTypeSpec * ts;
-	CInitDecl * indcl;
-	ts = (CTypeSpec *)(*idecl)->declspec();
+	const CTypeSpec * ts;
+	const CInitDecl * indcl;
+	ts = (const CTypeSpec *)(*idecl)->declspec();
 	indcl = (*idecl)->initdecl();
 	out << indcl->declarator()->ident()->name() << " : ";
 	switch (ts->typespec_type()) {

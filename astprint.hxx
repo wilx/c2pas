@@ -25,14 +25,14 @@ struct ASTInfo {
     /** Ukazatel na aktualni statement */
     CStatement * astmt;
 
-    ASTInfo(ASTInfo *, int, CStatement *);
-    ASTInfo(CStatement *, const ASTInfo *);
+    ASTInfo(const ASTInfo *, int, const CStatement *);
+    ASTInfo(const CStatement *, const ASTInfo *);
 };
 
 extern std::list<CDecl *> decls;
 extern std::list<CBinOp *> initlist;
 
-extern void astprint (CCompoundStatement *, ASTInfo *, std::ostream &);
+extern void astprint (const CCompoundStatement *, ASTInfo *, std::ostream &);
 extern void declsprint (std::list<CDecl *> &, std::ostream &);
 
 #endif // _ASTPRINT_HXX_
