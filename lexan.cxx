@@ -1062,7 +1062,7 @@ Token lexan (void)
 	      }
 	      if (ch == 'e' || ch == 'E')
 		  goto exponent_part;
-	      goto konec;
+	      goto cislo_konec;
 	  }
     
 	  /* cele cislo */
@@ -1103,7 +1103,7 @@ Token lexan (void)
 	      ch = GETCHAR();
 	  }
 
-	konec:
+	cislo_konec:
 	  UNGETCH();
 	  lexan_val.fpval = x * pow(10, exp + esign*eexp);
 	  return TOK_FPNUM;
@@ -1117,6 +1117,7 @@ Token lexan (void)
 	else 
 	    std::cerr << "Neni to EOF. Vazna chyba vstupniho proudu!!" 
 		      << std::endl;
+            return TOK_ERROR;
     }
   lexan_error:
     return TOK_ERROR;
