@@ -90,7 +90,7 @@ CIdentExpr::CIdentExpr(const CIdentExpr & x)
     : CExpr(x)
 {
     if (x.ident()) 
-	id = (const CIdent *)x.ident()->clone();
+	id = (CIdent *)x.ident()->clone();
     else
 	throw std::string("CIdentExpr(NULL) not allowed");
 }
@@ -122,15 +122,14 @@ COp::Type COp::op_type () const
 }
 
 /* CBinOp */
-CBinOp::CBinOp (CBinOp::Type tp, const CExpr * const l, const CExpr * const r)
+CBinOp::CBinOp (CBinOp::Type tp, const CExpr * l, const CExpr * r)
     : COp(COp::Binary), left(l), right(r), binopt(tp)
 {
 }
 
 CBinOp::CBinOp (const CBinOp & bop)
-    : COp(COp::Binary), left((const CExpr * const)bop.leftArg()->clone()),
-      right((const CExpr * const)bop.rightArg()->clone()), 
-      binopt(bop.binop_type())
+    : COp(COp::Binary), left((CExpr *)bop.leftArg()->clone()),
+      right((CExpr *)bop.rightArg()->clone()), binopt(bop.binop_type())
 {
 }
 
@@ -167,7 +166,7 @@ CUnOp::CUnOp (CUnOp::Type t, const CExpr * x)
 }
 
 CUnOp::CUnOp (const CUnOp & x)
-    : COp(COp::Unary), a((const CExpr *)x.arg()->clone()), unopt(x.unop_type())
+    : COp(COp::Unary), a((CExpr *)x.arg()->clone()), unopt(x.unop_type())
 {
 }
 
@@ -278,8 +277,8 @@ CDecl::CDecl (const CDeclSpec * d, const CInitDecl * i, const CDecl * n)
 
 CDecl::CDecl (const CDecl & x)
     : ASTBase(x), ASTList(x), 
-      dsp(x.declspec() ? (const CDeclSpec *)x.declspec()->clone() : NULL),
-      id(x.initdecl() ? (const CInitDecl *)x.initdecl()->clone() : NULL)
+      dsp(x.declspec() ? (CDeclSpec *)x.declspec()->clone() : NULL),
+      id(x.initdecl() ? (CInitDecl *)x.initdecl()->clone() : NULL)
 {
 }
 
@@ -329,8 +328,8 @@ CInitDecl::CInitDecl (const CDeclarator * d, const CExpr * i,
 
 CInitDecl::CInitDecl (const CInitDecl & x)
     : ASTBase(x), ASTList(x),
-      dc(x.declarator() ? (const CDeclarator *)x.declarator()->clone() : NULL),
-      in(x.initializer() ? (const CExpr *)x.initializer()->clone() : NULL)
+      dc(x.declarator() ? (CDeclarator *)x.declarator()->clone() : NULL),
+      in(x.initializer() ? (CExpr *)x.initializer()->clone() : NULL)
 {
 }
 
@@ -365,7 +364,7 @@ CDeclarator::CDeclarator (CDeclarator::Type t, const CIdent * i)
 
 CDeclarator::CDeclarator (const CDeclarator & x)
     : ASTBase(x), dct(x.declarator_type()),
-      id(x.ident() ? (const CIdent *)x.ident()->clone() : NULL)
+      id(x.ident() ? (CIdent *)x.ident()->clone() : NULL)
 {
 }
 
@@ -442,10 +441,9 @@ CCompoundStatement::CCompoundStatement (const CDecl * d, const CStatement * s,
 
 CCompoundStatement::CCompoundStatement (const CCompoundStatement & x)
     : CStatement(x),
-      dcls(x.declarations() ? (const CDecl *)x.declarations()->clone() : NULL),
+      dcls(x.declarations() ? (CDecl *)x.declarations()->clone() : NULL),
       stmts(x.statements() 
-	    ? (const CStatement *)x.statements()->clone() 
-	    : NULL)
+	    ? (CStatement *)x.statements()->clone() : NULL)
 {
 }
 
@@ -480,9 +478,9 @@ CSelectionStatement::CSelectionStatement
 
 CSelectionStatement::CSelectionStatement (const CSelectionStatement & x)
     : CStatement(x), sstp(x.selectionstmt_type()),
-      ex(x.expr() ? (const CExpr *)x.expr()->clone() : NULL),
-      s1(x.statement1() ? (const CStatement *)x.statement1()->clone() : NULL),
-      s2(x.statement2() ? (const CStatement *)x.statement2()->clone() : NULL)
+      ex(x.expr() ? (CExpr *)x.expr()->clone() : NULL),
+      s1(x.statement1() ? (CStatement *)x.statement1()->clone() : NULL),
+      s2(x.statement2() ? (CStatement *)x.statement2()->clone() : NULL)
 {
 }
 
@@ -527,8 +525,8 @@ CLabeledStatement::CLabeledStatement
 
 CLabeledStatement::CLabeledStatement (const CLabeledStatement & x)
     : CStatement(x), lstp(x.labeledstmt_type()),
-      st(x.statement() ? (const CStatement *)x.statement()->clone() : NULL),
-      ex(x.expr() ? (const CConstExpr *)x.expr()->clone() : NULL)
+      st(x.statement() ? (CStatement *)x.statement()->clone() : NULL),
+      ex(x.expr() ? (CConstExpr *)x.expr()->clone() : NULL)
 {
 }
 
@@ -567,7 +565,7 @@ CJumpStatement::CJumpStatement (Type t, const CExpr * e, const CStatement * n)
 }
 
 CJumpStatement::CJumpStatement (const CJumpStatement & x)
-    : CStatement(x), ex(x.expr() ? (const CExpr *)x.expr()->clone() : NULL)
+    : CStatement(x), ex(x.expr() ? (CExpr *)x.expr()->clone() : NULL)
 {
 }
 
@@ -611,17 +609,17 @@ CIterationStatement::CIterationStatement
 
 CIterationStatement::CIterationStatement (const CIterationStatement & x)
     : CStatement(x), istp(x.iterationstmt_type()),
-      st(x.statement() ? (const CStatement *)x.statement()->clone() : NULL)  
+      st(x.statement() ? (CStatement *)x.statement()->clone() : NULL)  
 {
     switch (istp) {
     case While:
     case Do:
-        ex = (const CExpr *)x.cond()->clone();
+        ex = (CExpr *)x.cond()->clone();
         break;
     case For:
-        in = x.init() ? (const CExpr *)x.init()->clone() : NULL;
-        cnd = x.cond() ? (const CExpr *)x.cond()->clone() : NULL;
-        ac = x.action() ? (const CExpr *)x.action()->clone() : NULL;
+        in = x.init() ? (CExpr *)x.init()->clone() : NULL;
+        cnd = x.cond() ? (CExpr *)x.cond()->clone() : NULL;
+        ac = x.action() ? (CExpr *)x.action()->clone() : NULL;
     }   
 }
 

@@ -14,6 +14,7 @@ int blocks;
 std::list<int> blockstack;
 std::list<const CBinOp *> initlist;
 //std::list<std::string, IdentInfo *> allidents;
+std::list<const LabelInfo *> labels;
 
 IdentInfo::IdentInfo (CTypeSpec * td, const std::string & n)
     : tspec(td), name(n)
@@ -29,6 +30,11 @@ ASTInfo::ASTInfo(const ASTInfo * p, int b, const CStatement * s)
 ASTInfo::ASTInfo(const CStatement * s, const ASTInfo * ai)
     : parent((ASTInfo *)ai->parent), block(ai->block), 
       idents(ai->idents), astmt((CStatement *)s)
+{
+}
+
+LabelInfo::LabelInfo (const CStatement * s, const std::string & n)
+    : stmt(s), name(n)
 {
 }
 
@@ -172,6 +178,11 @@ inline CDecl * gentmpdecl (const CTypeSpec * ts)
 		     NULL);
 }
 
+//inline LabelInfo * genlabel (const CStatement *, 
+
+/**
+   Pri generovani vystupu tela funkce zaznamena deklarace pro pozdejsi vystup. 
+*/
 inline void recordidents (const CDecl * dcl, ASTInfo * ai)
 {
     const CInitDecl * idcl = (CInitDecl *)dcl->initdecl();
@@ -229,7 +240,7 @@ inline CTypeSpec::Type getexprtype (const CExpr * e, const ASTInfo * ai)
 {
     switch (e->expr_type()) {
     case CExpr::Ident: {
-	const std::string id = ((const CIdentExpr *)e)->ident()->name();
+	const std::string id = ((CIdentExpr *)e)->ident()->name();
 	std::pair<std::string, ASTInfo *> ainfo 
 	    = findident(id, ai);
 	if (! ainfo.second)
@@ -237,9 +248,9 @@ inline CTypeSpec::Type getexprtype (const CExpr * e, const ASTInfo * ai)
 	return ainfo.second->idents->operator[](id)->tspec->typespec_type();
     }
     case CExpr::Op:
-	return getexprtype((const COp *)e, ai);
+	return getexprtype((COp *)e, ai);
     case CExpr::Const: {
-	switch (((const CConstExpr *)e)->const_type()) {
+	switch (((CConstExpr *)e)->const_type()) {
 	case CConstExpr::Int:
 	    return CTypeSpec::Int;
 	case CConstExpr::UInt:
@@ -250,8 +261,9 @@ inline CTypeSpec::Type getexprtype (const CExpr * e, const ASTInfo * ai)
 	    throw std::string("Unsupported type in getexprtype()");
 	}
     }
+    default:
+	throw std::string("Unknown CExpr type!");
     }
-    throw std::string("Pro uspokojeni warningu od kompilatoru");
 }
 
 void astprint (const CCompoundStatement * cs, ASTInfo * ai, 
@@ -447,7 +459,7 @@ inline bool iskindofassign (const CExpr * o)
 {
     if (o->expr_type() != CExpr::Op)
 	return false;
-    if (((const COp *)o)->op_type() != COp::Binary)
+    if (((COp *)o)->op_type() != COp::Binary)
 	return false;
     switch (((CBinOp *)o)->binop_type()) {
     case CBinOp::Assign:
@@ -471,8 +483,8 @@ void astprint (const CExpr * e, ASTInfo * ai, std::ostream & out)
 {
     switch (e->expr_type()) {
     case CExpr::Ident: {
-	std::string id = ((const CIdentExpr *)e)->ident()->name(); 
-	std::pair<std::string, ASTInfo *> ainf = findident(id, ai);
+	const std::string id = ((CIdentExpr *)e)->ident()->name(); 
+	const std::pair<std::string, ASTInfo *> ainf = findident(id, ai);
 	if (! ainf.second) {
 	    throw std::string("Identifier '") 
 		+ id + std::string("' not declared ?!");
@@ -494,7 +506,7 @@ void astprint (const CExpr * e, ASTInfo * ai, std::ostream & out)
 	}
 	break;
     case CExpr::Const:
-	astprint((const CConstExpr *)e, ai, out);
+	astprint((CConstExpr *)e, ai, out);
 	break;
     }
 }
@@ -572,15 +584,15 @@ void astprint (const CUnOp * o, ASTInfo * ai, std::ostream & out)
 	   a tak castecne simuluje postinkrement. */
  	const CBinOp * const tmpass 
 	    = new CBinOp(CBinOp::Assign, 
-			 new CIdentExpr(*(const CIdentExpr *)o->arg()),
+			 new CIdentExpr(*(CIdentExpr *)o->arg()),
 			 new CBinOp(CBinOp::Plus,
 				    new CIdentExpr(
-					*(const CIdentExpr *)o->arg()),
+					*(CIdentExpr *)o->arg()),
 				    new CUIntExpr(1)));
 	CExprStatement * const estmt = 
 	    new CExprStatement(new CBinOp(*tmpass), 
 			       NULL);
-	const CStatement * const old = (const CStatement *)ai->astmt->next();
+	const CStatement * const old = (CStatement *)ai->astmt->next();
 	ai->astmt->setNext(estmt);
 	estmt->setNext(old);
 	astprint(o->arg(), ai, out);
@@ -816,7 +828,7 @@ void declsprint (std::list<const CDecl *> & dcls, std::ostream & out)
     for (std::list<const CDecl *>::iterator idecl = dcls.begin();
 	 idecl != dcls.end();
 	 ++idecl) {
-	const CTypeSpec * const ts = (const CTypeSpec *)(*idecl)->declspec();
+	const CTypeSpec * const ts = (CTypeSpec *)(*idecl)->declspec();
 	const CInitDecl * const indcl = (*idecl)->initdecl();
 	out << indcl->declarator()->ident()->name() << " : ";
 	switch (ts->typespec_type()) {

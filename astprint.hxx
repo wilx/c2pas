@@ -10,9 +10,16 @@
 
 struct IdentInfo {
     CTypeSpec * const tspec;
-    std::string name;
+    const std::string name;
 
     IdentInfo (CTypeSpec *, const std::string &);
+};
+
+struct LabelInfo {
+    const CStatement * const stmt;
+    const std::string name;
+
+    LabelInfo (const CStatement *, const std::string &);
 };
 
 struct ASTInfo {
@@ -25,9 +32,10 @@ struct ASTInfo {
     /** Ukazatel na aktualni statement */
     CStatement * const astmt;
 
-    ASTInfo(const ASTInfo *, int, const CStatement *);
-    ASTInfo(const CStatement *, const ASTInfo *);
+    ASTInfo (const ASTInfo *, int, const CStatement *);
+    ASTInfo (const CStatement *, const ASTInfo *);
 };
+
 
 extern std::list<const CDecl *> decls;
 extern std::list<const CBinOp *> initlist;
