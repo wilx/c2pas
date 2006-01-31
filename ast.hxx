@@ -44,31 +44,31 @@ union AllTypes {
     AllTypes (char x) : charval(x) {}
     AllTypes (bool x) : boolval(x) {}
 
-    operator long double () {
+    operator long double () const {
 	return fpval;
     }
     
-    operator long long int () {
+    operator long long int () const {
 	return intval;
     }
 
-    operator unsigned long long int () {
+    operator unsigned long long int () const {
 	return uintval;
     }
 
-    operator char () {
+    operator char () const {
 	return charval;
     }
     
-    operator bool () {
+    operator bool () const {
 	return boolval;
     }
     
-    operator int () {
+    operator int () const {
 	return intval;
     }
 
-    operator unsigned () {
+    operator unsigned () const {
 	return uintval;
     }
 };
