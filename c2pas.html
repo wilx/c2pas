@@ -1,0 +1,58 @@
+<html>
+<head>
+<title>C2PAS</title>
+</head>
+
+<body>
+<h1>C2PAS</h1>
+<p>Vypracoval <a href="mailto:haismav@fel.cvut.cz">Vaclav Haisman</a> pro
+predmet 36PJ a X36TJC.</p>
+
+<h2>Zadani</h2>
+<p>Vytvorit prekladac z jazyka C do jazyka Pascal.</p>
+
+<h2>Reseni</h2>
+<p>Mnou implementovany prekladac z C do Pascalu (dale jen c2pas) pouziva rucne
+napsany lexikalni analyzator a Bisonem generovany syntakticky analyzator. c2pas
+prekladac je z duvodu implementacni slozitosti omezeny jen na nektere
+konstrukty jazyka C. Podporuje konstrukty <code>switch</code> a
+<code>while</code>, promenne typu <code>float</code> a <code>int</code> a pouze
+jednu funkci (<code>main</code>).
+</p>
+
+<p>Lexikalni analyzator dodava syntaktickemu analyzatoru tokeny. Syntakticky
+analyzator vytvori AST ze trid deklarovanych v souboru
+<code>ast.hxx</code>. Vygenerovany AST se preda funkci <code>astprint()</code>,
+ktera rekurzivne prochazi AST a vytiskne do proudu prelozeny Pascalsky
+program.</p>
+
+
+<h3>Popis obsahu souboru</h3>
+<ul>
+
+<li>ast.cxx a ast.hxx - Obsahuji deklarace trid pouzitych v AST pro jazyk
+C.</li>
+
+<li>astprint.cxx a astprint.hxx - Obsahuji funkce, ktere transformuji AST
+programu v C do jazyka Pascal.</li>
+
+<li>c2pas.cxx - Funkce main().</li>
+
+<li>csynan.cxx, csynan.hxx, csynan.yxx - csynan.yxx je implementace C gramatiky
+pro generator syntaktickych analyzatoru Bison. csynan.hxx a csynan.cxx jsou
+Bisonem vygenerovane soubory.</li>
+
+<li>defines.hxx - Pomocne deklarace pro syntakticky analyzator.</li>
+
+<li>join.hxx - Pomocne funkce pro vystup sekvence do proudu.</li>
+
+<li>lexan.cxx, lexan.hxx - Rucne psany lexikalni analyzator pro jazyk C, bez
+preprocesoru.</li>
+
+<li>switch.cxx, switch.hxx - Pomocne funkce pro transformaci AST
+reprezentujiciho <code>switch(){}</code>.</li>
+
+</ul>
+
+</body>
+</html>
