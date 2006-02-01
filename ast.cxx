@@ -6,6 +6,9 @@ ASTBase::ASTBase (ASTBase::Type t)
   : astt(t)
 { }
 
+ASTBase::~ASTBase ()
+{ }
+
 ASTBase::Type ASTBase::type () const
 {
   return astt;
@@ -85,7 +88,7 @@ CIdentExpr::CIdentExpr(const CIdentExpr & x)
   : CExpr(x)
 {
   if (x.ident())
-    id = (CIdent *)x.ident()->clone();
+    id = static_cast<CIdent *>(x.ident()->clone());
   else
     throw std::string("CIdentExpr(NULL) not allowed");
 }
