@@ -30,17 +30,19 @@ scan_for_cases (CStatement const * stmt,
 	{
 	case CStatement::Labeled:
 	  {
-	    switch (static_cast<const CLabeledStatement *>(stmt)->labeledstmt_type ())
+	    const CLabeledStatement * lstmt 
+	      = static_cast<const CLabeledStatement *>(stmt);
+	    switch (lstmt->labeledstmt_type ())
 	      {
 	      case CLabeledStatement::Case:
 		labels.push_back (gen_label_name ());
-		lstmts.push_back (static_cast<const CLabeledStatement *>(stmt));
+		lstmts.push_back (lstmt);
 		break;
 
 	      case CLabeledStatement::Default:
 		default_label = gen_label_name ();
 		labels.push_back (default_label);
-		lstmts.push_back (static_cast<const CLabeledStatement *>(stmt));
+		lstmts.push_back (lstmt);
 		break;
 
 	      default:
