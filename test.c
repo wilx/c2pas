@@ -21,6 +21,7 @@ case 2 : {
     z = x - y;
 }
 default: {
+    z += 1;
 }
 }
 

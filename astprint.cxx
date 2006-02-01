@@ -451,22 +451,23 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
     throw std::string("Only 'Compound' statement can follow 'switch'");
   CCompoundStatement const * swstmt
     = dynamic_cast<const CCompoundStatement *>(ss->statement1());
-  //CLabeledStatement const * lstmt;
-  const CStatement * stmt = swstmt->statements();;
+  CLabeledStatement const * lstmt;
+  const CStatement * stmt = swstmt->statements();
   
-  std::list<std::string> labels;
+  std::list<std::string> labels2;
   std::list<const CLabeledStatement *> lstmts;
   std::string default_label;
-  scan_for_cases (stmt, labels, lstmts, default_label);
+  scan_for_cases (stmt, labels2, lstmts, default_label);
+  labels.insert (labels.end (), labels2.begin(), labels2.end ());
   
   // Rozskok.
-  std::list<std::string>::const_iterator label_it = labels.begin ();
+  std::list<std::string>::const_iterator label_it = labels2.begin ();
   std::list<const CLabeledStatement *>::const_iterator stmt_it
     = lstmts.begin ();
 
   //std::cerr << "lstmts.size ()" << lstmts.size () << std::endl;
 
-  for (; label_it != labels.end () && stmt_it != lstmts.end (); 
+  for (; label_it != labels2.end () && stmt_it != lstmts.end (); 
        ++label_it, ++stmt_it)
     {
       if (*label_it == default_label)
@@ -484,7 +485,9 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
 	}
     }
 
-  /*  
+  label_it = labels2.begin ();
+  stmt_it = lstmts.begin ();
+  stmt = swstmt->statements();
   while (stmt) 
     {
       switch (stmt->stmt_type()) 
@@ -494,17 +497,14 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
 	  if (lstmt->labeledstmt_type() == CLabeledStatement::Case) 
 	    {
 	      out << ";" << std::endl;
-	      out << "if (";
-	      astprint(swexpr, ai, out);
-	      out << " = ";
-	      astprint(lstmt->expr(), ai, out);
-	      out << ") then begin" << std::endl;
+              out << *label_it << ": begin" << std::endl;
 	      astprint(lstmt->statement(), ai, out);
 	      out << std::endl << "end";
 	    }
 	  else if (lstmt->labeledstmt_type() == CLabeledStatement::Default) 
 	    {
-	      out << std::endl << " else begin" << std::endl;
+              out << ";" << std::endl;
+	      out << default_label << ": begin" << std::endl;
 	      astprint(lstmt->statement(), ai, out);
 	      out << std::endl << "end";
 	    }
@@ -518,8 +518,9 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
 			    "supported");
 	}
       stmt = static_cast<CStatement *>(stmt->next());
+      ++label_it;
+      ++stmt_it;
     }
-  */
 }
 
 bool iskindofassign (const CExpr * o)
@@ -948,7 +949,7 @@ declsprint (std::list<const CDecl *> & dcls, std::ostream & out)
 void 
 labelsprint (std::list<std::string> const & labels, std::ostream & out)
 {
-  out << "label " << join_into_stream (labels, ", ") << std::endl;
+  out << "label " << join_into_stream (labels, ", ") << ";" << std::endl;
 }
 
 /*

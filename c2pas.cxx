@@ -24,6 +24,8 @@ int main (void)
 	/* vystup hlavni funkce */
 	std::cout << "procedure main;" << std::endl;
 	{
+            /* vystup labelu */
+            labelsprint (labels, std::cout);
 	    /* vystup deklaraci */
 	    std::cout << "var" << std::endl;
 	    declsprint(decls, std::cout);
