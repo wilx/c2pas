@@ -1,0 +1,20 @@
+#!/bin/sh
+
+ACLOCAL=${ACLOCAL:-aclocal}
+AUTOMAKE=${AUTOMAKE:-automake}
+AUTOCONF=${AUTOCONF:-autoconf}
+AUTOHEADER=${AUTOHEADER:-autoheader}
+
+touch Makefile.am
+touch configure.ac
+touch acinclude.m4
+
+${ACLOCAL} --force -I . \
+&& ${AUTOHEADER} --force -I . \
+&& ${AUTOMAKE} --add-missing --copy \
+&& ${AUTOCONF} --force -I . 
+
+if test -x ./config.status; then 
+    ./config.status --recheck \
+    && ./config.status
+fi
