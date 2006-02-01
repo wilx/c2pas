@@ -11,7 +11,7 @@ extern int yyparse (void *);
 int main (void)
 {
     extern int yydebug;
-    yydebug = 1;
+    yydebug = 0;
     try {
         lexan_init(std::cin);
         CCompoundStatement * tree;
