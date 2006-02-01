@@ -463,7 +463,11 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
   std::list<std::string>::const_iterator label_it = labels.begin ();
   std::list<const CLabeledStatement *>::const_iterator stmt_it
     = lstmts.begin ();
-  for (; label_it != labels.end (); ++label_it, ++stmt_it)
+
+  //std::cerr << "lstmts.size ()" << lstmts.size () << std::endl;
+
+  for (; label_it != labels.end () && stmt_it != lstmts.end (); 
+       ++label_it, ++stmt_it)
     {
       if (*label_it == default_label)
 	{
@@ -471,6 +475,7 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
 	}
       else
 	{
+          //std::cerr << "*stmt_it: " << (void *)(*stmt_it) << std::endl;
 	  const CBinOp * const tmp = new CBinOp(CBinOp::Eq, swexpr, 
 						(*stmt_it)->expr ());
 	  out << "if ";

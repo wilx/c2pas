@@ -8,7 +8,7 @@
 
 extern void scan_for_cases (CStatement const *, 
 			    std::list<std::string> & labels,
-			    std::list<const CLabeledStatement *> lstmts,
+			    std::list<const CLabeledStatement *> & lstmts,
 			    std::string & default_label);
 
 
