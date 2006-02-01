@@ -1,9 +1,14 @@
 #include "ast.hxx"
 
-/* ASTBase */
 
+/* ASTBase */
 ASTBase::ASTBase (ASTBase::Type t)
     : astt(t)
+{
+}
+
+ASTBase::ASTBase (ASTBase const & b)
+  : RefCounted (), astt (b.astt)
 {
 }
 

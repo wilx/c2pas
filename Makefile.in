@@ -58,7 +58,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_c2pas_OBJECTS = c2pas.$(OBJEXT) lexan.$(OBJEXT) csynan.$(OBJEXT) \
-	ast.$(OBJEXT) astprint.$(OBJEXT)
+	ast.$(OBJEXT) astprint.$(OBJEXT) refcount.$(OBJEXT)
 c2pas_OBJECTS = $(am_c2pas_OBJECTS)
 c2pas_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
@@ -185,7 +185,8 @@ AM_YFLAGS = -d #build header
 BUILT_SOURCES = csynan.hxx csynan.cxx
 AM_CXXFLAGS = @CXXFLAGS@ -W -Wall -fverbose-asm -save-temps
 c2pas_SOURCES = c2pas.cxx lexan.cxx lexan.hxx csynan.yxx ast.hxx \
-	ast.cxx defines.hxx astprint.hxx astprint.cxx
+	ast.cxx defines.hxx astprint.hxx astprint.cxx refcount.hxx \
+	refcount.cxx
 EXTRA_DIST = Doxyfile test.c COPYING config.sub config.guess depcomp \
 	aclocal.m4 config.h.in docs
 all: $(BUILT_SOURCES) config.h
@@ -286,6 +287,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c2pas.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/csynan.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lexan.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/refcount.Po@am__quote@
 
 .cxx.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

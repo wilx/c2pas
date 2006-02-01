@@ -3,9 +3,11 @@
 
 #include <string>
 #include <cstdio>
+#include "refcount.hxx"
 
 
 class ASTBase
+  : public RefCounted
 {
 public:
   enum Type {Expr, Statement, Ident, TypeSpec, Decl, DeclSpec, InitDecl,
@@ -14,6 +16,7 @@ protected:
   const Type astt;
 public:
   ASTBase (Type);
+  ASTBase (ASTBase const &);
   virtual ASTBase * clone () const = 0;
   Type type () const;
 };
@@ -21,7 +24,8 @@ public:
 /*
   Vyrazy
 */
-class CExpr : public ASTBase
+class CExpr 
+  : public ASTBase
 {
 public:
   enum Type {Const, Op, Ident};
