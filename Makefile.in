@@ -185,7 +185,8 @@ AM_YFLAGS = -d #build header
 BUILT_SOURCES = csynan.hxx csynan.cxx
 AM_CXXFLAGS = @CXXFLAGS@ -W -Wall -fverbose-asm -save-temps
 c2pas_SOURCES = c2pas.cxx lexan.cxx lexan.hxx csynan.yxx ast.hxx \
-	ast.cxx defines.hxx astprint.hxx astprint.cxx alltypes.hxx
+	ast.cxx defines.hxx astprint.hxx astprint.cxx alltypes.hxx \
+	join.hxx
 EXTRA_DIST = Doxyfile test.c COPYING config.sub config.guess depcomp \
 	aclocal.m4 config.h.in docs
 all: $(BUILT_SOURCES) config.h

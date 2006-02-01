@@ -5,18 +5,18 @@
 #include <sstream>
 #include <iostream>
 #include "astprint.hxx"
+#include "join.hxx"
 
 
 static std::list<int> blocklist;
-
+static int blocks;
+static std::list<int> blockstack;
 
 std::map<std::string, ASTInfo *> pidents;
 std::list<const CDecl *> decls;
-int blocks;
-std::list<int> blockstack;
 std::list<const CBinOp *> initlist;
 //std::list<std::string, IdentInfo *> allidents;
-//std::list<const LabelInfo *> labels;
+std::list<std::string> labels;
 
 
 IdentInfo::IdentInfo (CTypeSpec * td, const std::string & n)
@@ -867,7 +867,8 @@ void astprint (const CBinOp * o, ASTInfo * ai, std::ostream & out)
     }
 }
 
-void declsprint (std::list<const CDecl *> & dcls, std::ostream & out)
+void 
+declsprint (std::list<const CDecl *> & dcls, std::ostream & out)
 {
   for (std::list<const CDecl *>::iterator idecl = dcls.begin();
        idecl != dcls.end();
@@ -900,6 +901,13 @@ void declsprint (std::list<const CDecl *> & dcls, std::ostream & out)
 				     indcl->declarator()->ident()->clone()),
 		      (CExpr *)indcl->initializer()->clone()));
     }
+}
+
+
+void 
+labelsprint (std::list<std::string> const & labels, std::ostream & out)
+{
+  out << "label " << join_into_stream (labels, ", ") << std::endl;
 }
 
 /*
