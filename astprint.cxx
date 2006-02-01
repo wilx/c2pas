@@ -6,6 +6,7 @@
 #include <iostream>
 #include "astprint.hxx"
 #include "join.hxx"
+#include "switch.hxx"
 
 
 static std::list<int> blocklist;
@@ -422,64 +423,98 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
   if (ss->selectionstmt_type() != CSelectionStatement::Switch)
     throw std::string("'If' statement not supported");
   const CIdentExpr * swexpr;
-  if (ss->expr()->expr_type() != CExpr::Ident) {
-    /* Vytvor docasnou promennou a prirazeni pokud je argument switche
-       slozitejsi nez pouhy identifikator aby jsme ho nevyhodnocovali
-       vicekrat */
-    CDecl * const tmpdecl =
-      gentmpdecl(new CTypeSpec(CTypeSpec::Long, NULL));
-    decls.push_back(tmpdecl);
-    const CIdent * const tmpident =
-      (CIdent *)tmpdecl->initdecl()->declarator()->ident();
-    const CIdentExpr * const idexpr =
-      new CIdentExpr(new CIdent(*tmpident));
-    const CBinOp * const tmpass =
-      new CBinOp(CBinOp::Assign, idexpr, ss->expr());
-    const CExprStatement * const estmt =
-      new CExprStatement(new CBinOp(*tmpass), NULL);
-    astprint(estmt, ai, out);
-    swexpr = idexpr;
-  }
-  else {
-    swexpr = dynamic_cast<const CIdentExpr *>(ss->expr());
-  }
+  if (ss->expr()->expr_type() != CExpr::Ident) 
+    {
+      /* Vytvor docasnou promennou a prirazeni pokud je argument switche
+	 slozitejsi nez pouhy identifikator aby jsme ho nevyhodnocovali
+	 vicekrat */
+      CDecl * const tmpdecl =
+	gentmpdecl(new CTypeSpec(CTypeSpec::Long, NULL));
+      decls.push_back(tmpdecl);
+      const CIdent * const tmpident =
+	(CIdent *)tmpdecl->initdecl()->declarator()->ident();
+      const CIdentExpr * const idexpr =
+	new CIdentExpr(new CIdent(*tmpident));
+      const CBinOp * const tmpass =
+	new CBinOp(CBinOp::Assign, idexpr, ss->expr());
+      const CExprStatement * const estmt =
+	new CExprStatement(new CBinOp(*tmpass), NULL);
+      astprint(estmt, ai, out);
+      swexpr = idexpr;
+    }
+  else 
+    {
+      swexpr = dynamic_cast<const CIdentExpr *>(ss->expr());
+    }
 
   if (ss->statement1()->stmt_type() != CStatement::Compound)
     throw std::string("Only 'Compound' statement can follow 'switch'");
   CCompoundStatement const * swstmt
     = dynamic_cast<const CCompoundStatement *>(ss->statement1());
-  CLabeledStatement const * lstmt;
+  //CLabeledStatement const * lstmt;
   const CStatement * stmt = swstmt->statements();;
-  while (stmt != NULL) {
-    switch (stmt->stmt_type()) {
-    case CStatement::Labeled:
-      lstmt = static_cast<const CLabeledStatement *>(stmt);
-      if (lstmt->labeledstmt_type() == CLabeledStatement::Case) {
-	out << ";" << std::endl;
-	out << "if (";
-	astprint(swexpr, ai, out);
-	out << " = ";
-	astprint(lstmt->expr(), ai, out);
-	out << ") then begin" << std::endl;
-	astprint(lstmt->statement(), ai, out);
-	out << std::endl << "end";
-      }
-      else if (lstmt->labeledstmt_type() == CLabeledStatement::Default) {
-	out << std::endl << " else begin" << std::endl;
-	astprint(lstmt->statement(), ai, out);
-	out << std::endl << "end";
-      }
+  
+  std::list<std::string> labels;
+  std::list<const CLabeledStatement *> lstmts;
+  std::string default_label;
+  scan_for_cases (stmt, labels, lstmts, default_label);
+  
+  // Rozskok.
+  std::list<std::string>::const_iterator label_it = labels.begin ();
+  std::list<const CLabeledStatement *>::const_iterator stmt_it
+    = lstmts.begin ();
+  for (; label_it != labels.end (); ++label_it, ++stmt_it)
+    {
+      if (*label_it == default_label)
+	{
+	  out << "goto " << default_label << std::endl;
+	}
       else
-	throw std::string("Only 'Case' and 'Default' labeled statement"
-			  " within 'switch' supported");
-      //out << ";" << std::endl;
-      break;
-    default:
-      throw std::string("Only 'Labeled' statement within 'switch' "
-			"supported");
+	{
+	  const CBinOp * const tmp = new CBinOp(CBinOp::Eq, swexpr, 
+						(*stmt_it)->expr ());
+	  out << "if ";
+	  astprint (tmp, ai, out);
+	  out << " then goto " << *label_it << ";" << std::endl;
+	}
     }
-    stmt = static_cast<CStatement *>(stmt->next());
-  }
+
+  /*  
+  while (stmt) 
+    {
+      switch (stmt->stmt_type()) 
+	{
+	case CStatement::Labeled:
+	  lstmt = static_cast<const CLabeledStatement *>(stmt);
+	  if (lstmt->labeledstmt_type() == CLabeledStatement::Case) 
+	    {
+	      out << ";" << std::endl;
+	      out << "if (";
+	      astprint(swexpr, ai, out);
+	      out << " = ";
+	      astprint(lstmt->expr(), ai, out);
+	      out << ") then begin" << std::endl;
+	      astprint(lstmt->statement(), ai, out);
+	      out << std::endl << "end";
+	    }
+	  else if (lstmt->labeledstmt_type() == CLabeledStatement::Default) 
+	    {
+	      out << std::endl << " else begin" << std::endl;
+	      astprint(lstmt->statement(), ai, out);
+	      out << std::endl << "end";
+	    }
+	  else
+	    throw std::string("Only 'Case' and 'Default' labeled statement"
+			      " within 'switch' supported");
+	  //out << ";" << std::endl;
+	  break;
+	default:
+	  throw std::string("Only 'Labeled' statement within 'switch' "
+			    "supported");
+	}
+      stmt = static_cast<CStatement *>(stmt->next());
+    }
+  */
 }
 
 bool iskindofassign (const CExpr * o)
@@ -531,11 +566,12 @@ void astprint (const CExpr * e, ASTInfo * ai, std::ostream & out)
 	}*/
       if (iskindofassign(e))
 	astprint(static_cast<const CBinOp *>(e), ai, out);
-      else {
-	out << "(";
-	astprint(static_cast<const COp *>(e), ai, out);
-	out << ")";
-      }
+      else 
+	{
+	  out << "(";
+	  astprint(static_cast<const COp *>(e), ai, out);
+	  out << ")";
+	}
       break;
     case CExpr::Const:
       astprint(static_cast<const CConstExpr *>(e), ai, out);
