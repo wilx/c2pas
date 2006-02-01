@@ -21,7 +21,8 @@ public:
 /*
   Vyrazy
 */
-class CExpr : public ASTBase
+class CExpr
+  : public ASTBase
 {
 public:
   enum Type {Const, Op, Ident};
