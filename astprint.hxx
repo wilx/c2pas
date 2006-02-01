@@ -8,32 +8,36 @@
 #include <list>
 #include "ast.hxx"
 
-struct IdentInfo {
-    CTypeSpec * const tspec;
-    const std::string name;
 
-    IdentInfo (CTypeSpec *, const std::string &);
+struct IdentInfo
+{
+  CTypeSpec * const tspec;
+  const std::string name;
+
+  IdentInfo (CTypeSpec *, const std::string &);
 };
 
-struct LabelInfo {
-    const CStatement * const stmt;
-    const std::string name;
+struct LabelInfo
+{
+  const CStatement * const stmt;
+  const std::string name;
 
-    LabelInfo (const CStatement *, const std::string &);
+  LabelInfo (const CStatement *, const std::string &);
 };
 
-struct ASTInfo {
-    /** Ukazatel na rodicovsky jmenny prostor */
-    ASTInfo * const parent;
-    /** Hloubka vnoreni bloku */
-    const int block;
-    /** Mapa prekladajici C identifikatory na Pascalske identifikatory */
-    std::map<std::string, IdentInfo *> * idents;
-    /** Ukazatel na aktualni statement */
-    CStatement * const astmt;
+struct ASTInfo
+{
+  /** Ukazatel na rodicovsky jmenny prostor */
+  ASTInfo * const parent;
+  /** Hloubka vnoreni bloku */
+  const int block;
+  /** Mapa prekladajici C identifikatory na Pascalske identifikatory */
+  std::map<std::string, IdentInfo *> * idents;
+  /** Ukazatel na aktualni statement */
+  CStatement * const astmt;
 
-    ASTInfo (const ASTInfo *, int, const CStatement *);
-    ASTInfo (const CStatement *, const ASTInfo *);
+  ASTInfo (const ASTInfo *, int, const CStatement *);
+  ASTInfo (const CStatement *, const ASTInfo *);
 };
 
 
