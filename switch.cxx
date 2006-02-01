@@ -30,7 +30,7 @@ scan_for_cases (CStatement const * stmt,
 	{
 	case CStatement::Labeled:
 	  {
-	    switch (static_cast<const CLabeledStatement *>(stmt)->type ())
+	    switch (static_cast<const CLabeledStatement *>(stmt)->labeledstmt_type ())
 	      {
 	      case CLabeledStatement::Case:
 		labels.push_back (gen_label_name ());

@@ -467,7 +467,7 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
     {
       if (*label_it == default_label)
 	{
-	  out << "goto " << default_label << std::endl;
+	  out << "goto " << default_label << ";" << std::endl;
 	}
       else
 	{
