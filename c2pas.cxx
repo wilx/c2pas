@@ -19,7 +19,7 @@ int main (void)
         std::cerr << "after yyparse()" << std::endl;
 	/* prvni vystup tela funkce do docasneho streamu */
 	std::ostringstream body;
-	astprint(tree, new ASTInfo(NULL, 1, tree), body);
+	astprint_comp_statement (tree, new ASTInfo(NULL, 1, tree), body);
 	
 	/* vystup hlavni funkce */
 	std::cout << "procedure main;" << std::endl;

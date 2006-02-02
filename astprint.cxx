@@ -42,7 +42,8 @@ LabelInfo::LabelInfo (const CStatement * s, const std::string & n)
 
 
 static inline
-char mytolower (char ch)
+char
+mytolower (char ch)
 {
   return std::tolower(ch);
 }
@@ -228,14 +229,16 @@ recordidents (const CDecl * dcl, ASTInfo * ai)
 }
 
 CTypeSpec::Type getexprtype (const CExpr *, const ASTInfo *);
-CTypeSpec::Type getexprtype (const COp * o, const ASTInfo * ai)
+
+CTypeSpec::Type
+getexprtype (const COp * o, const ASTInfo * ai)
 {
   switch (o->op_type())
     {
     case COp::Unary:
-      return getexprtype(((const CUnOp *)o)->arg(), ai);
+      return getexprtype(static_cast<const CUnOp *>(o)->arg(), ai);
     case COp::Binary: {
-      const CBinOp * bo = (const CBinOp *)o;
+      const CBinOp * bo = static_cast<const CBinOp *>(o);
       const CTypeSpec::Type lt = getexprtype(bo->leftArg(), ai),
 	rt = getexprtype(bo->rightArg(), ai);
       if (lt == rt)
@@ -254,13 +257,15 @@ CTypeSpec::Type getexprtype (const COp * o, const ASTInfo * ai)
     }
 }
 
-CTypeSpec::Type getexprtype (const CExpr * e, const ASTInfo * ai)
+CTypeSpec::Type
+getexprtype (const CExpr * e, const ASTInfo * ai)
 {
   switch (e->expr_type())
     {
     case CExpr::Ident:
       {
-	const std::string id = ((CIdentExpr *)e)->ident()->name();
+	const std::string id
+          = static_cast<CIdentExpr const*>(e)->ident()->name();
 	std::pair<std::string, ASTInfo *> ainfo
 	  = findident(id, ai);
 	if (! ainfo.second)
@@ -268,9 +273,9 @@ CTypeSpec::Type getexprtype (const CExpr * e, const ASTInfo * ai)
 	return ainfo.second->idents->operator[](id)->tspec->typespec_type();
       }
     case CExpr::Op:
-      return getexprtype((COp *)e, ai);
+      return getexprtype(static_cast<COp const *>(e), ai);
     case CExpr::Const: {
-      switch (((CConstExpr *)e)->const_type())
+      switch (static_cast<CConstExpr const *>(e)->const_type())
 	{
 	case CConstExpr::Int:
 	  return CTypeSpec::Int;
@@ -287,65 +292,78 @@ CTypeSpec::Type getexprtype (const CExpr * e, const ASTInfo * ai)
     }
 }
 
-void astprint (const CCompoundStatement * cs, ASTInfo * ai,
-	       std::ostream & out);
-void astprint (const CSelectionStatement * cs, ASTInfo * ai,
-	       std::ostream & out);
-void astprint (const CExprStatement *, ASTInfo *, std::ostream &);
-void astprint (const CIterationStatement *, ASTInfo *, std::ostream &);
-void astprint (const CJumpStatement *, ASTInfo *, std::ostream &);
-void astprint (const CExpr *, ASTInfo *, std::ostream &);
-void astprint (const COp *, ASTInfo *, std::ostream &);
-void astprint (const CConstExpr *, ASTInfo *, std::ostream &);
-void astprint (const CUnOp *, ASTInfo *, std::ostream &);
-void astprint (const CBinOp *, ASTInfo *, std::ostream &);
+void astprint_comp_statement (const CCompoundStatement * cs, ASTInfo * ai,
+                              std::ostream & out);
+void astprint_sel_statement (const CSelectionStatement * cs, ASTInfo * ai,
+                             std::ostream & out);
+void astprint_expr_statement (const CExprStatement *, ASTInfo *,
+                              std::ostream &);
+void astprint_iter_statement (const CIterationStatement *, ASTInfo *,
+                              std::ostream &);
+void astprint_jump_statement (const CJumpStatement *, ASTInfo *,
+                              std::ostream &);
+void astprint_expr (const CExpr *, ASTInfo *, std::ostream &);
+void astprint_op (const COp *, ASTInfo *, std::ostream &);
+void astprint_const_expr (const CConstExpr *, ASTInfo *, std::ostream &);
+void astprint_unop (const CUnOp *, ASTInfo *, std::ostream &);
+void astprint_binop (const CBinOp *, ASTInfo *, std::ostream &);
 
 
-void astprint (const CStatement * s, ASTInfo * ai,
-	       std::ostream & out)
+void
+astprint_statement (const CStatement * s, ASTInfo * ai,
+                    std::ostream & out)
 {
   if (! s)
     return;
-
-  switch (s->stmt_type())
+  CStatement const * stmt = s;
+  while (stmt)
     {
-    case CStatement::Labeled:
-      throw std::string("'Labeled' statement handled within 'Selection' "
-			"statement only");
-    case CStatement::Compound:
-      astprint(static_cast<const CCompoundStatement *>(s),
-	       new ASTInfo(ai, ++blocks, s), out);
-      break;
-    case CStatement::Expr:
-      astprint(static_cast<const CExprStatement *>(s), new ASTInfo(s, ai), 
-	       out);
-      break;
-    case CStatement::Iteration:
-      astprint(static_cast<const CIterationStatement *>(s), 
-	       new ASTInfo(s, ai), out);
-      break;
-    case CStatement::Jump:
-      astprint(static_cast<const CJumpStatement *>(s), new ASTInfo(s, ai), 
-	       out);
-      break;
-    case CStatement::Selection:
-      astprint(static_cast<const CSelectionStatement *>(s), 
-	       new ASTInfo(s, ai), out);
+      switch (stmt->stmt_type())
+        {
+        case CStatement::Labeled:
+          throw std::string("'Labeled' statement handled within 'Selection' "
+                            "statement only");
+        case CStatement::Compound:
+          astprint_comp_statement
+            (static_cast<const CCompoundStatement *>(stmt),
+             new ASTInfo(ai, ++blocks, stmt), out);
+          break;
+        case CStatement::Expr:
+          astprint_expr_statement(static_cast<const CExprStatement *>(stmt),
+                                  new ASTInfo(stmt, ai), out);
+          break;
+        case CStatement::Iteration:
+          astprint_iter_statement
+            (static_cast<const CIterationStatement *>(stmt),
+             new ASTInfo(stmt, ai), out);
+          break;
+        case CStatement::Jump:
+          astprint_jump_statement(static_cast<const CJumpStatement *>(stmt),
+                                  new ASTInfo(stmt, ai), out);
+          break;
+        case CStatement::Selection:
+          astprint_sel_statement
+            (static_cast<const CSelectionStatement *>(stmt),
+             new ASTInfo(stmt, ai), out);
+        }
+      // pokracuj na dalsi CStatement v seznamu
+      stmt = stmt->next ();
     }
-  /* pokracuj na dalsi CStatement v seznamu */
-  astprint(static_cast<CStatement const *>(s->next()), ai, out);
 }
 
-void astprint (const CExprStatement * es, ASTInfo * ai, std::ostream & out)
+void
+astprint_expr_statement (const CExprStatement * es, ASTInfo * ai,
+                         std::ostream & out)
 {
   out << ";" << std::endl;
   if (! es)
     return;
-  astprint(es->expr(), ai, out);
+  astprint_expr(es->expr(), ai, out);
 }
 
-void astprint (const CIterationStatement * is, ASTInfo * ai,
-	       std::ostream & out)
+void
+astprint_iter_statement (const CIterationStatement * is, ASTInfo * ai,
+                         std::ostream & out)
 {
   out << ";" << std::endl;
   if (! is)
@@ -354,13 +372,15 @@ void astprint (const CIterationStatement * is, ASTInfo * ai,
   if (is->iterationstmt_type() != CIterationStatement::While)
     throw std::string("Only 'While' iteration statement supported");
   out << "while ";
-  astprint(is->cond(), ai, out);
+  astprint_expr(is->cond(), ai, out);
   out << " do begin ";
-  astprint(is->statement(), ai, out);
+  astprint_statement(is->statement(), ai, out);
   out << ";" << std::endl << "end";
 }
 
-void astprint (const CJumpStatement * js, ASTInfo *, std::ostream & out)
+void
+astprint_jump_statement (const CJumpStatement * js, ASTInfo *,
+                         std::ostream & out)
 {
   out << ";" << std::endl;
   if (! js)
@@ -381,8 +401,9 @@ void astprint (const CJumpStatement * js, ASTInfo *, std::ostream & out)
     }
 }
 
-void astprint (const CCompoundStatement * cs, ASTInfo * ai,
-	       std::ostream & out)
+void
+astprint_comp_statement (const CCompoundStatement * cs, ASTInfo * ai,
+                         std::ostream & out)
 {
   out << ";" << std::endl;
   if (cs == NULL)
@@ -401,7 +422,7 @@ void astprint (const CCompoundStatement * cs, ASTInfo * ai,
   /* vystup bloku */
   out << "begin" << std::endl;
   const CStatement * const stmt = cs->statements();
-  astprint(stmt, ai, out);
+  astprint_statement(stmt, ai, out);
   /*while (stmt != NULL) {
     out << ";" << std::endl;
     astprint(stmt, ai, out);
@@ -414,8 +435,9 @@ void astprint (const CCompoundStatement * cs, ASTInfo * ai,
     blockstack.erase(--blockstack.end());
 }
 
-void astprint (const CSelectionStatement * ss, ASTInfo * ai,
-	       std::ostream & out)
+void
+astprint_sel_statement (const CSelectionStatement * ss, ASTInfo * ai,
+                        std::ostream & out)
 {
   out << ";" << std::endl;
   if (! ss)
@@ -423,7 +445,7 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
   if (ss->selectionstmt_type() != CSelectionStatement::Switch)
     throw std::string("'If' statement not supported");
   const CIdentExpr * swexpr;
-  if (ss->expr()->expr_type() != CExpr::Ident) 
+  if (ss->expr()->expr_type() != CExpr::Ident)
     {
       /* Vytvor docasnou promennou a prirazeni pokud je argument switche
 	 slozitejsi nez pouhy identifikator aby jsme ho nevyhodnocovali
@@ -439,10 +461,10 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
 	new CBinOp(CBinOp::Assign, idexpr, ss->expr());
       const CExprStatement * const estmt =
 	new CExprStatement(new CBinOp(*tmpass), NULL);
-      astprint(estmt, ai, out);
+      astprint_expr_statement(estmt, ai, out);
       swexpr = idexpr;
     }
-  else 
+  else
     {
       swexpr = dynamic_cast<const CIdentExpr *>(ss->expr());
     }
@@ -453,13 +475,13 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
     = dynamic_cast<const CCompoundStatement *>(ss->statement1());
   CLabeledStatement const * lstmt;
   const CStatement * stmt = swstmt->statements();
-  
+
   std::list<std::string> labels2;
   std::list<const CLabeledStatement *> lstmts;
   std::string default_label;
   scan_for_cases (stmt, labels2, lstmts, default_label);
   labels.insert (labels.end (), labels2.begin(), labels2.end ());
-  
+
   // Rozskok.
   std::list<std::string>::const_iterator label_it = labels2.begin ();
   std::list<const CLabeledStatement *>::const_iterator stmt_it
@@ -467,7 +489,7 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
 
   //std::cerr << "lstmts.size ()" << lstmts.size () << std::endl;
 
-  for (; label_it != labels2.end () && stmt_it != lstmts.end (); 
+  for (; label_it != labels2.end () && stmt_it != lstmts.end ();
        ++label_it, ++stmt_it)
     {
       if (*label_it == default_label)
@@ -477,10 +499,10 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
       else
 	{
           //std::cerr << "*stmt_it: " << (void *)(*stmt_it) << std::endl;
-	  const CBinOp * const tmp = new CBinOp(CBinOp::Eq, swexpr, 
+	  const CBinOp * const tmp = new CBinOp(CBinOp::Eq, swexpr,
 						(*stmt_it)->expr ());
 	  out << "if ";
-	  astprint (tmp, ai, out);
+	  astprint_binop (tmp, ai, out);
 	  out << " then goto " << *label_it << ";" << std::endl;
 	}
     }
@@ -488,24 +510,24 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
   label_it = labels2.begin ();
   stmt_it = lstmts.begin ();
   stmt = swstmt->statements();
-  while (stmt) 
+  while (stmt)
     {
-      switch (stmt->stmt_type()) 
+      switch (stmt->stmt_type())
 	{
 	case CStatement::Labeled:
 	  lstmt = static_cast<const CLabeledStatement *>(stmt);
-	  if (lstmt->labeledstmt_type() == CLabeledStatement::Case) 
+	  if (lstmt->labeledstmt_type() == CLabeledStatement::Case)
 	    {
 	      out << ";" << std::endl;
               out << *label_it << ": begin" << std::endl;
-	      astprint(lstmt->statement(), ai, out);
+	      astprint_statement(lstmt->statement(), ai, out);
 	      out << std::endl << "end";
 	    }
-	  else if (lstmt->labeledstmt_type() == CLabeledStatement::Default) 
+	  else if (lstmt->labeledstmt_type() == CLabeledStatement::Default)
 	    {
               out << ";" << std::endl;
 	      out << default_label << ": begin" << std::endl;
-	      astprint(lstmt->statement(), ai, out);
+	      astprint_statement(lstmt->statement(), ai, out);
 	      out << std::endl << "end";
 	    }
 	  else
@@ -523,7 +545,8 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
     }
 }
 
-bool iskindofassign (const CExpr * o)
+bool
+iskindofassign (const CExpr * o)
 {
   if (o->expr_type() != CExpr::Op)
     return false;
@@ -548,13 +571,14 @@ bool iskindofassign (const CExpr * o)
     }
 }
 
-void astprint (const CExpr * e, ASTInfo * ai, std::ostream & out)
+void
+astprint_expr (const CExpr * e, ASTInfo * ai, std::ostream & out)
 {
   switch (e->expr_type())
     {
     case CExpr::Ident:
       {
-	const std::string id 
+	const std::string id
 	  = static_cast<const CIdentExpr *>(e)->ident()->name();
 	const std::pair<std::string, ASTInfo *> ainf = findident(id, ai);
 	if (! ainf.second)
@@ -571,38 +595,40 @@ void astprint (const CExpr * e, ASTInfo * ai, std::ostream & out)
 	astprint((CBinOp *)e, ai, out);
 	}*/
       if (iskindofassign(e))
-	astprint(static_cast<const CBinOp *>(e), ai, out);
-      else 
+	astprint_binop(static_cast<const CBinOp *>(e), ai, out);
+      else
 	{
 	  out << "(";
-	  astprint(static_cast<const COp *>(e), ai, out);
+	  astprint_op(static_cast<const COp *>(e), ai, out);
 	  out << ")";
 	}
       break;
     case CExpr::Const:
-      astprint(static_cast<const CConstExpr *>(e), ai, out);
+      astprint_const_expr (static_cast<const CConstExpr *>(e), ai, out);
       break;
     }
 }
 
-void astprint (const COp * o, ASTInfo * ai, std::ostream & out)
+void
+astprint_op (const COp * o, ASTInfo * ai, std::ostream & out)
 {
-  switch (o->op_type()) 
+  switch (o->op_type())
     {
     case COp::Unary:
-      astprint(static_cast<const CUnOp *>(o), ai, out);
+      astprint_unop(static_cast<const CUnOp *>(o), ai, out);
       break;
     case COp::Binary:
-      astprint(static_cast<const CBinOp *>(o), ai, out);
+      astprint_binop(static_cast<const CBinOp *>(o), ai, out);
       break;
     case COp::Ternary:
       throw std::string("'Ternary' operation not supported");
     }
 }
 
-void astprint (const CConstExpr * x, ASTInfo *, std::ostream & out)
+void
+astprint_const_expr (const CConstExpr * x, ASTInfo *, std::ostream & out)
 {
-  switch (x->const_type()) 
+  switch (x->const_type())
     {
     case CConstExpr::Float:
       out << (long double)x->value();
@@ -619,43 +645,44 @@ void astprint (const CConstExpr * x, ASTInfo *, std::ostream & out)
     }
 }
 
-void astprint (const CUnOp * o, ASTInfo * ai, std::ostream & out)
+void
+astprint_unop (const CUnOp * o, ASTInfo * ai, std::ostream & out)
 {
   switch (o->unop_type())
     {
     case CUnOp::Tilde:
       out << "not(";
-      astprint(o->arg(), ai, out);
+      astprint_expr(o->arg(), ai, out);
       out << ")";
       break;
     case CUnOp::Excl:
       out << "not(boolean(";
-      astprint(o->arg(), ai, out);
+      astprint_expr(o->arg(), ai, out);
       out << "))";
       break;
     case CUnOp::Plus:
       if (o->arg()->expr_type() == CExpr::Op)
 	{
 	  out << "(";
-	  astprint(o->arg(), ai, out);
+	  astprint_expr(o->arg(), ai, out);
 	  out << ")";
 	}
       else
 	{
-	  astprint(o->arg(), ai, out);
+	  astprint_expr(o->arg(), ai, out);
 	}
       break;
     case CUnOp::Minus:
       if (o->arg()->expr_type() == CExpr::Op)
 	{
 	  out << "-(";
-	  astprint(o->arg(), ai, out);
+	  astprint_expr(o->arg(), ai, out);
 	  out << ")";
 	}
       else
 	{
 	  out << "-";
-	  astprint(o->arg(), ai, out);
+	  astprint_expr(o->arg(), ai, out);
 	}
       break;
     case CUnOp::PostInc:
@@ -677,7 +704,7 @@ void astprint (const CUnOp * o, ASTInfo * ai, std::ostream & out)
 	const CStatement * const old = (CStatement *)ai->astmt->next();
 	ai->astmt->set_next(estmt);
 	estmt->set_next(old);
-	astprint(o->arg(), ai, out);
+	astprint_expr(o->arg(), ai, out);
 	break;
       }
 
@@ -698,7 +725,7 @@ void astprint (const CUnOp * o, ASTInfo * ai, std::ostream & out)
 	CStatement * old = (CStatement *)ai->astmt->next();
 	ai->astmt->set_next(estmt);
 	estmt->set_next(old);
-	astprint(o->arg(), ai, out);
+	astprint_expr(o->arg(), ai, out);
 	break;
       }
     case CUnOp::PreInc:
@@ -707,10 +734,10 @@ void astprint (const CUnOp * o, ASTInfo * ai, std::ostream & out)
     case CUnOp::And:
       throw std::string("Unsupported unary operation");
     }
-
 }
 
-CBinOp::Type getassignoptype (const CBinOp * o)
+CBinOp::Type
+getassignoptype (const CBinOp * o)
 {
   switch (o->binop_type())
     {
@@ -740,34 +767,35 @@ CBinOp::Type getassignoptype (const CBinOp * o)
 }
 
 
-void astprint (const CBinOp * o, ASTInfo * ai, std::ostream & out)
+void
+astprint_binop (const CBinOp * o, ASTInfo * ai, std::ostream & out)
 {
   switch (o->binop_type())
     {
     case CBinOp::Plus:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ")+(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::Minus:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ")-(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::Mult:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ")*(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::Div:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ")";
       if (getexprtype(o->leftArg(), ai) == CTypeSpec::Float
 	  || getexprtype(o->rightArg(), ai) == CTypeSpec::Float)
@@ -775,116 +803,116 @@ void astprint (const CBinOp * o, ASTInfo * ai, std::ostream & out)
       else
 	out << " div ";
       out << "(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::Mod:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ") mod (";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::LShift:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ") lsh (";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::RShift:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ") rsh (";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::BAnd:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ") and (";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::BOr:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ") or (";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::LAnd:
       out << "boolean(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ") and boolean(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::LOr:
       out << "boolean(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ") and boolean(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::Eq:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ")=(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::NEq:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ")<>(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::LEq:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ")<=(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::GEq:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ")>=(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::Lt:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ")<(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::Gt:
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ")>(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")";
       break;
     case CBinOp::Xor:
       out << "((";
       out << "(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ") and not(";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")) or (not(";
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ") and (";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       out << ")))";
       break;
     case CBinOp::Assign:
-      astprint(o->leftArg(), ai, out);
+      astprint_expr(o->leftArg(), ai, out);
       out << ":=";
-      astprint(o->rightArg(), ai, out);
+      astprint_expr(o->rightArg(), ai, out);
       break;
     case CBinOp::MultAss:
     case CBinOp::DivAss:
@@ -903,13 +931,13 @@ void astprint (const CBinOp * o, ASTInfo * ai, std::ostream & out)
 		     new CBinOp(getassignoptype(o),
 				(const CExpr *)o->leftArg()->clone(),
 				(const CExpr *)o->rightArg()->clone()));
-	astprint(tmpex, ai, out);
+	astprint_expr(tmpex, ai, out);
       }
 
     }
 }
 
-void 
+void
 declsprint (std::list<const CDecl *> & dcls, std::ostream & out)
 {
   for (std::list<const CDecl *>::iterator idecl = dcls.begin();
@@ -946,7 +974,7 @@ declsprint (std::list<const CDecl *> & dcls, std::ostream & out)
 }
 
 
-void 
+void
 labelsprint (std::list<std::string> const & labels, std::ostream & out)
 {
   out << "label " << join_into_stream (labels, ", ") << ";" << std::endl;
@@ -963,4 +991,3 @@ labelsprint (std::list<std::string> const & labels, std::ostream & out)
   }
   }
 */
-

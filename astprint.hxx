@@ -47,7 +47,8 @@ extern std::list<std::string> labels;
 extern std::list<const CDecl *> decls;
 extern std::list<const CBinOp *> initlist;
 
-extern void astprint (const CCompoundStatement *, ASTInfo *, std::ostream &);
+extern void astprint_comp_statement (const CCompoundStatement *, ASTInfo *, 
+                                     std::ostream &);
 extern void declsprint (std::list<const CDecl *> &, std::ostream &);
 extern void labelsprint (std::list<std::string> const &, std::ostream &);
 
