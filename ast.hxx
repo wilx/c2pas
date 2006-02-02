@@ -173,13 +173,19 @@ public:
   }
 
   Elem *
+  next ()
+  {
+    return nxt;
+  }
+
+  Elem const *
   next () const
   {
     return nxt;
   }
 
   Elem *
-  setNext (const Elem * n)
+  set_next (const Elem * n)
   {
     Elem * old = nxt;
     nxt = const_cast<Elem *>(n);

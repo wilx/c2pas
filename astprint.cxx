@@ -223,7 +223,7 @@ recordidents (const CDecl * dcl, ASTInfo * ai)
 					      NULL),
 				NULL));
       /* pokracuj dalsim CInitDecl */
-      idcl = dynamic_cast<CInitDecl *>(idcl->next());
+      idcl = dynamic_cast<const CInitDecl *>(idcl->next());
     }
 }
 
@@ -333,7 +333,7 @@ void astprint (const CStatement * s, ASTInfo * ai,
 	       new ASTInfo(s, ai), out);
     }
   /* pokracuj na dalsi CStatement v seznamu */
-  astprint(static_cast<CStatement *>(s->next()), ai, out);
+  astprint(static_cast<CStatement const *>(s->next()), ai, out);
 }
 
 void astprint (const CExprStatement * es, ASTInfo * ai, std::ostream & out)
@@ -517,7 +517,7 @@ void astprint (const CSelectionStatement * ss, ASTInfo * ai,
 	  throw std::string("Only 'Labeled' statement within 'switch' "
 			    "supported");
 	}
-      stmt = static_cast<CStatement *>(stmt->next());
+      stmt = static_cast<CStatement const *>(stmt->next());
       ++label_it;
       ++stmt_it;
     }
@@ -675,8 +675,8 @@ void astprint (const CUnOp * o, ASTInfo * ai, std::ostream & out)
 	  new CExprStatement(new CBinOp(*tmpass),
 			     NULL);
 	const CStatement * const old = (CStatement *)ai->astmt->next();
-	ai->astmt->setNext(estmt);
-	estmt->setNext(old);
+	ai->astmt->set_next(estmt);
+	estmt->set_next(old);
 	astprint(o->arg(), ai, out);
 	break;
       }
@@ -696,8 +696,8 @@ void astprint (const CUnOp * o, ASTInfo * ai, std::ostream & out)
 				  new CUIntExpr(1)));
 	CExprStatement * estmt = new CExprStatement(new CBinOp(*tmpass), NULL);
 	CStatement * old = (CStatement *)ai->astmt->next();
-	ai->astmt->setNext(estmt);
-	estmt->setNext(old);
+	ai->astmt->set_next(estmt);
+	estmt->set_next(old);
 	astprint(o->arg(), ai, out);
 	break;
       }

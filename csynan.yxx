@@ -517,7 +517,7 @@ init_declarator_list
         /* | init_declarator_list ',' init_declarator */
         | init_declarator ',' init_declarator_list
         {
-            ((CInitDecl *)($1.ast))->setNext((CInitDecl *)$3.ast);
+            ((CInitDecl *)($1.ast))->set_next((CInitDecl *)$3.ast);
             $$.ast = $1.ast;
         }
         ;
@@ -898,7 +898,7 @@ declaration_list
         /* | declaration_list declaration */
         | declaration declaration_list
         {
-          (dynamic_cast<CDecl *>($1.ast))->setNext
+          (dynamic_cast<CDecl *>($1.ast))->set_next
             (dynamic_cast<CDecl *>($2.ast));
             $$.ast = $1.ast;
         }
@@ -913,7 +913,7 @@ statement_list
         /* | statement_list statement */
         | statement statement_list
         {
-          (dynamic_cast<CStatement *>($1.ast))->setNext
+          (dynamic_cast<CStatement *>($1.ast))->set_next
             (dynamic_cast<CStatement *>($2.ast));
             $$.ast = $1.ast;
         }
