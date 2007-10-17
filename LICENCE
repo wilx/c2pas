@@ -1,4 +1,3 @@
-/*
 Copyright (c) 1997-2007, Václav Haisman
 
 All rights reserved.
@@ -23,19 +22,4 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
-#ifndef SWITCH_HXX
-#define SWITCH_HXX
 
-#include <list>
-#include <string>
-#include "ast.hxx"
-
-
-extern void scan_for_cases (CStatement const *, 
-			    std::list<std::string> & labels,
-			    std::list<const CLabeledStatement *> & lstmts,
-			    std::string & default_label);
-
-
-#endif // SWITCH_HXX
